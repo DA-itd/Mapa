@@ -176,3 +176,84 @@ export function buildDirectoryExportJson(
     2
   );
 }
+
+function escapeCsv(val: string | number | undefined | null): string {
+  const str = val === undefined || val === null ? '' : String(val);
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+export function buildDirectoryCsvExport(
+  buildings: CampusBuildingEntry[]
+): string {
+  const headers = [
+    'edificio_codigo',
+    'edificio_nombre',
+    'categoria',
+    'latitud',
+    'longitud',
+    'espacio_codigo',
+    'espacio_nombre',
+    'tipo',
+    'piso',
+    'horario',
+    'notas',
+    'capturado_por',
+    'fecha',
+  ];
+
+  const rows: string[] = [headers.join(',')];
+
+  for (const b of buildings) {
+    const lat = b.customLatLng?.lat ?? '';
+    const lng = b.customLatLng?.lng ?? '';
+    if (b.spaces.length === 0) {
+      rows.push(
+        [
+          b.code,
+          b.name,
+          b.category,
+          lat,
+          lng,
+          '',
+          '',
+          'Edificio',
+          '',
+          '',
+          b.description,
+          b.updatedBy ?? '',
+          b.updatedAt ?? '',
+        ]
+          .map(escapeCsv)
+          .join(',')
+      );
+    } else {
+      for (const sp of b.spaces) {
+        rows.push(
+          [
+            b.code,
+            b.name,
+            b.category,
+            lat,
+            lng,
+            sp.code,
+            sp.name,
+            sp.kind,
+            sp.floor,
+            sp.schedule ?? '',
+            sp.notes ?? '',
+            b.updatedBy ?? '',
+            b.updatedAt ?? '',
+          ]
+            .map(escapeCsv)
+            .join(',')
+        );
+      }
+    }
+  }
+
+  return '\uFEFF' + rows.join('\n');
+}
+
