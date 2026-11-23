@@ -43,10 +43,10 @@ export function loadGithubRepoUrl(): string {
     return (
       localStorage.getItem(REPO_URL_STORAGE_KEY) ||
       envUrl ||
-      'https://github.com/tu-usuario/mapa-campus-itd'
+      'https://github.com/DA-itd/Mapa'
     );
   } catch {
-    return envUrl || 'https://github.com/tu-usuario/mapa-campus-itd';
+    return envUrl || 'https://github.com/DA-itd/Mapa';
   }
 }
 
