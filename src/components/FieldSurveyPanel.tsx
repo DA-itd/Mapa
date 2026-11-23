@@ -27,6 +27,7 @@ import {
   buildDirectoryCsvExport,
   buildDirectoryExportJson,
 } from '../utils/campusStorage';
+import planoItdUrl from '../assets/plano-itd.png?inline';
 
 interface FieldSurveyPanelProps {
   buildings: CampusBuildingEntry[];
@@ -953,7 +954,7 @@ export function FieldSurveyPanel({
                 }
               >
                 <img
-                  src="/assets/aistudio/image_0f38b691.png"
+                  src={planoItdUrl}
                   alt="Plano oficial de unidades académicas del Instituto Tecnológico de Durango"
                   onError={() => setPlanoLoadError(true)}
                   className={
