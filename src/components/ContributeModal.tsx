@@ -4,8 +4,7 @@ import {
   Copy,
   Crosshair,
   Download,
-  ExternalLink,
-  GitPullRequest,
+  FileSpreadsheet,
   Plus,
   RotateCcw,
   Trash2,
@@ -18,12 +17,11 @@ import type {
   SpaceKind,
 } from '../types/campus';
 import {
+  buildDirectoryCsvExport,
   buildDirectoryExportJson,
-  loadGithubRepoUrl,
-  saveGithubRepoUrl,
 } from '../utils/campusStorage';
 
-export type ContributeModalTab = 'editor' | 'github' | 'vercel';
+export type ContributeModalTab = 'editor' | 'export';
 
 interface ContributeModalProps {
   isOpen: boolean;
@@ -88,7 +86,6 @@ export function ContributeModal({
   const [tab, setTab] = useState<ContributeModalTab>('editor');
   const [selectedId, setSelectedId] = useState<string>('__new__');
   const [draft, setDraft] = useState<CampusBuildingEntry>(createEmptyBuilding);
-  const [repoUrl, setRepoUrl] = useState<string>(loadGithubRepoUrl);
   const [copied, setCopied] = useState(false);
   const [savedNotice, setSavedNotice] = useState<string | null>(null);
 
@@ -223,7 +220,7 @@ export function ContributeModal({
     setDraft(cleaned);
     onClearPickedCoords();
     setSavedNotice(
-      'Guardado localmente. Ya puedes verlo en el mapa y exportarlo a GitHub.'
+      'Guardado localmente. Ya puedes verlo en el mapa o exportarlo en formato JSON/CSV.'
     );
     setTimeout(() => setSavedNotice(null), 4000);
   };
@@ -250,21 +247,16 @@ export function ContributeModal({
     URL.revokeObjectURL(url);
   };
 
-  const cleanRepoBase = repoUrl.replace(/\/+$/, '');
-  const githubEditFileUrl = `${cleanRepoBase}/edit/main/src/data/campus-directory.json`;
-  const githubIssueUrl = `${cleanRepoBase}/issues/new?title=${encodeURIComponent(
-    `[Mapa ITD] Actualización de edificio/áreas: ${draft.name || 'Campus'}`
-  )}&body=${encodeURIComponent(
-    `### Propuesta de actualización de ubicación\n\n- **Edificio:** ${draft.code} - ${draft.name}\n- **Categoría:** ${draft.category}\n- **Coordenadas fijadas:** ${
-      draft.customLatLng
-        ? `${draft.customLatLng.lat.toFixed(6)}, ${draft.customLatLng.lng.toFixed(6)}`
-        : 'Sin cambio'
-    }\n- **Áreas / Aulas / Labs:** ${draft.spaces.length}\n\n\`\`\`json\n${JSON.stringify(
-      draft,
-      null,
-      2
-    )}\n\`\`\``
-  )}`;
+  const handleDownloadCsv = () => {
+    const csv = buildDirectoryCsvExport(buildings);
+    const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `directorio-itd-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-[1px]">
@@ -276,8 +268,8 @@ export function ContributeModal({
               Contribuciones del Campus ITD
             </h2>
             <p className="text-xs text-slate-500">
-              Actualiza edificios, oficinas, aulas y laboratorios y envíalos a
-              GitHub para publicarlos en Vercel.
+              Actualiza edificios, oficinas, aulas y laboratorios del directorio
+              del campus.
             </p>
           </div>
           <button
@@ -294,7 +286,7 @@ export function ContributeModal({
           <button
             type="button"
             onClick={() => setTab('editor')}
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap shrink-0 ${
               tab === 'editor'
                 ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900'
@@ -304,25 +296,14 @@ export function ContributeModal({
           </button>
           <button
             type="button"
-            onClick={() => setTab('github')}
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-              tab === 'github'
+            onClick={() => setTab('export')}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap shrink-0 ${
+              tab === 'export'
                 ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            2. Enviar a GitHub (PR)
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('vercel')}
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-              tab === 'vercel'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            3. Desplegar en Vercel
+            2. Exportar Base de Datos
           </button>
         </div>
 
@@ -353,10 +334,10 @@ export function ContributeModal({
                   <button
                     type="button"
                     onClick={onResetToRepo}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 whitespace-nowrap shrink-0"
                   >
                     <RotateCcw className="h-3.5 w-3.5" />
-                    Restablecer al repo base
+                    Restablecer catálogo base
                   </button>
                 )}
               </div>
@@ -574,16 +555,16 @@ export function ContributeModal({
               <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-4">
                 <button
                   type="button"
-                  onClick={() => setTab('github')}
-                  className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  onClick={() => setTab('export')}
+                  className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 whitespace-nowrap shrink-0"
                 >
-                  Ir a exportar a GitHub
+                  Ir a exportar datos
                 </button>
                 <button
                   type="button"
                   onClick={handleSave}
                   disabled={!draft.name.trim()}
-                  className="rounded-lg bg-[#6F1D3A] px-4 py-2 text-xs font-semibold text-white hover:bg-[#58162d] disabled:opacity-50"
+                  className="rounded-lg bg-[#6F1D3A] px-4 py-2 text-xs font-semibold text-white hover:bg-[#58162d] disabled:opacity-50 whitespace-nowrap shrink-0"
                 >
                   Guardar cambios en el mapa
                 </button>
@@ -591,118 +572,57 @@ export function ContributeModal({
             </div>
           )}
 
-          {tab === 'github' && (
+          {tab === 'export' && (
             <div className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-700">
-                  URL del repositorio de GitHub del proyecto
-                </label>
-                <input
-                  type="url"
-                  value={repoUrl}
-                  onChange={(e) => {
-                    setRepoUrl(e.target.value);
-                    saveGithubRepoUrl(e.target.value);
-                  }}
-                  placeholder="https://github.com/tu-usuario/mapa-campus-itd"
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-[#6F1D3A] focus:outline-none"
-                />
-                <p className="mt-1 text-xs text-slate-500">
-                  Configura también <code className="font-mono">VITE_GITHUB_REPO_URL</code> en Vercel para que todos los estudiantes envíen sus cambios directo a tu repo.
-                </p>
-              </div>
+              <p className="text-xs leading-relaxed text-slate-600">
+                Descarga el directorio completo con coordenadas GPS, edificios,
+                aulas, laboratorios y oficinas para respaldarlo o abrirlo en
+                Excel.
+              </p>
 
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
+                  onClick={handleDownloadCsv}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-emerald-800 whitespace-nowrap shrink-0"
+                >
+                  <FileSpreadsheet className="h-3.5 w-3.5" />
+                  Descargar CSV (Excel)
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDownloadJson}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#6F1D3A] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#58162d] whitespace-nowrap shrink-0"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Descargar JSON
+                </button>
+
+                <button
+                  type="button"
                   onClick={handleCopyJson}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50 whitespace-nowrap shrink-0"
                 >
                   {copied ? (
                     <Check className="h-3.5 w-3.5" />
                   ) : (
                     <Copy className="h-3.5 w-3.5" />
                   )}
-                  {copied ? 'JSON copiado' : 'Copiar campus-directory.json'}
+                  {copied ? 'JSON copiado' : 'Copiar JSON'}
                 </button>
-
-                <button
-                  type="button"
-                  onClick={handleDownloadJson}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  Descargar JSON
-                </button>
-
-                <a
-                  href={githubEditFileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#6F1D3A] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#58162d]"
-                >
-                  <GitPullRequest className="h-3.5 w-3.5" />
-                  Editar archivo y abrir PR en GitHub
-                </a>
-
-                <a
-                  href={githubIssueUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  Enviar como Issue prellenado
-                </a>
               </div>
 
               <div>
                 <div className="mb-1.5 flex items-center justify-between text-xs text-slate-500">
-                  <span className="font-mono">src/data/campus-directory.json</span>
+                  <span className="font-mono">campus-directory.json</span>
                   <span className="tabular-nums">
                     {buildings.length} edificios
                   </span>
                 </div>
-                <pre className="max-h-64 overflow-auto rounded-lg border border-slate-200 bg-slate-950 p-3.5 font-mono text-xs leading-relaxed text-slate-100">
+                <pre className="max-h-72 overflow-auto rounded-lg border border-slate-200 bg-slate-950 p-3.5 font-mono text-xs leading-relaxed text-slate-100">
                   {exportJson}
                 </pre>
-              </div>
-            </div>
-          )}
-
-          {tab === 'vercel' && (
-            <div className="space-y-4 text-sm text-slate-700">
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                <h3 className="font-bold text-slate-900">
-                  Flujo completo: GitHub + Estudiantes + Vercel
-                </h3>
-                <ol className="mt-2.5 list-decimal space-y-2 pl-5 text-xs leading-relaxed text-slate-700">
-                  <li>
-                    <strong>Sube el proyecto a GitHub:</strong> incluye{' '}
-                    <code className="font-mono">src/data/campus-directory.json</code>,{' '}
-                    <code className="font-mono">vercel.json</code> y la carpeta{' '}
-                    <code className="font-mono">api/</code> ya incluidos en este código.
-                  </li>
-                  <li>
-                    <strong>Conecta el repositorio en Vercel:</strong> importa tu
-                    repositorio de GitHub en Vercel (Vite + funciones serverless en{' '}
-                    <code className="font-mono">/api/*</code> se configuran automáticamente).
-                  </li>
-                  <li>
-                    <strong>Configura las variables de entorno en Vercel:</strong>
-                    <ul className="mt-1 list-disc pl-5 font-mono text-[11px] text-slate-800">
-                      <li>VITE_GOOGLE_MAPS_API_KEY (restringida a tu dominio .vercel.app)</li>
-                      <li>GEMINI_API_KEY (para el asistente con Google Maps Grounding)</li>
-                      <li>VITE_GITHUB_REPO_URL (URL pública de tu repo en GitHub)</li>
-                    </ul>
-                  </li>
-                  <li>
-                    <strong>Actualización continua por estudiantes:</strong> cuando
-                    un estudiante edita aulas, oficinas o laboratorios aquí y envía su
-                    Pull Request en GitHub, al aprobarlo Vercel redespliega el mapa
-                    actualizado en segundos.
-                  </li>
-                </ol>
               </div>
             </div>
           )}
