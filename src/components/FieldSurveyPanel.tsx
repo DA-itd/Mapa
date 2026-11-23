@@ -1,12 +1,19 @@
-import {useMemo, useState} from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import {
+  ArrowLeft,
   CheckCircle2,
-  ClipboardList,
+  ChevronDown,
+  ChevronUp,
   Crosshair,
   Download,
   FileSpreadsheet,
+  ListChecks,
   LocateFixed,
-  Plus,
+  Map as MapIcon,
+  Mic,
+  MicOff,
+  Trash2,
+  X,
 } from 'lucide-react';
 import type {
   BuildingCategory,
@@ -23,11 +30,41 @@ interface FieldSurveyPanelProps {
   buildings: CampusBuildingEntry[];
   onSaveBuildings: (updated: CampusBuildingEntry[]) => void;
   hasMapsKey: boolean;
+  onExitSurvey?: () => void;
   onRequestMapPick?: () => void;
   pickedCoords?: {lat: number; lng: number} | null;
   onClearPickedCoords?: () => void;
   onFocusCoords?: (coords: {lat: number; lng: number}, zoom?: number) => void;
 }
+
+type CapturePhase = 'walk' | 'details';
+type EntryTargetKind = SpaceKind | 'Edificio';
+type DrawerView = 'none' | 'map' | 'records';
+
+interface SpeechRecognitionResultLike {
+  readonly length: number;
+  [index: number]: {readonly transcript: string};
+}
+
+interface SpeechRecognitionEventLike {
+  readonly results: {
+    readonly length: number;
+    [index: number]: SpeechRecognitionResultLike;
+  };
+}
+
+interface SpeechRecognitionInstance {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+
+type SpeechRecognitionCtor = new () => SpeechRecognitionInstance;
 
 const CATEGORIES: BuildingCategory[] = [
   'Académico',
@@ -38,25 +75,43 @@ const CATEGORIES: BuildingCategory[] = [
   'Servicios Estudiantiles',
 ];
 
-const SPACE_KINDS: SpaceKind[] = [
-  'Aula',
-  'Laboratorio',
-  'Oficina',
-  'Servicio',
-  'Auditorio',
+const ENTRY_KINDS: Array<{value: EntryTargetKind; label: string}> = [
+  {value: 'Aula', label: 'Aula / Salón'},
+  {value: 'Laboratorio', label: 'Laboratorio'},
+  {value: 'Oficina', label: 'Oficina'},
+  {value: 'Edificio', label: 'Edificio'},
+  {value: 'Servicio', label: 'Servicio'},
+  {value: 'Auditorio', label: 'Auditorio'},
 ];
 
+const QUICK_FLOORS = ['Planta Baja', 'Piso 1', 'Piso 2', 'Piso 3'];
+
 const SURVEYOR_STORAGE_KEY = 'itd_surveyor_name_v1';
+
+function getSpeechRecognitionCtor(): SpeechRecognitionCtor | null {
+  if (typeof window === 'undefined') return null;
+  const win = window as unknown as {
+    SpeechRecognition?: SpeechRecognitionCtor;
+    webkitSpeechRecognition?: SpeechRecognitionCtor;
+  };
+  return win.SpeechRecognition ?? win.webkitSpeechRecognition ?? null;
+}
 
 export function FieldSurveyPanel({
   buildings,
   onSaveBuildings,
   hasMapsKey,
+  onExitSurvey,
   onRequestMapPick,
   pickedCoords,
   onClearPickedCoords,
   onFocusCoords,
 }: FieldSurveyPanelProps) {
+  const [phase, setPhase] = useState<CapturePhase>(() =>
+    pickedCoords ? 'details' : 'walk'
+  );
+  const [drawerView, setDrawerView] = useState<DrawerView>('none');
+
   const [surveyorName, setSurveyorName] = useState<string>(() => {
     try {
       return localStorage.getItem(SURVEYOR_STORAGE_KEY) || '';
@@ -81,15 +136,38 @@ export function FieldSurveyPanel({
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
 
+  const [entryKind, setEntryKind] = useState<EntryTargetKind>('Aula');
   const [spaceCode, setSpaceCode] = useState('');
   const [spaceName, setSpaceName] = useState('');
-  const [spaceKind, setSpaceKind] = useState<SpaceKind>('Aula');
   const [spaceFloor, setSpaceFloor] = useState('Planta Baja');
   const [spaceSchedule, setSpaceSchedule] = useState('');
   const [spaceNotes, setSpaceNotes] = useState('');
-  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [showExtras, setShowExtras] = useState(false);
 
+  const [lastSavedNotice, setLastSavedNotice] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+
+  const speechSupported = useMemo(() => Boolean(getSpeechRecognitionCtor()), []);
   const activeCoords = pickedCoords ?? gpsCoords;
+
+  useEffect(() => {
+    if (pickedCoords) {
+      setPhase('details');
+      setDrawerView('none');
+    }
+  }, [pickedCoords]);
+
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.stop();
+    };
+  }, []);
+
+  const selectedBuilding = useMemo(
+    () => buildings.find((b) => b.id === targetBuildingId) ?? null,
+    [buildings, targetBuildingId]
+  );
 
   const stats = useMemo(() => {
     let totalSpaces = 0;
@@ -105,9 +183,9 @@ export function FieldSurveyPanel({
     };
   }, [buildings]);
 
-  const handleCaptureGps = () => {
+  const triggerGpsCapture = () => {
     if (!navigator.geolocation) {
-      setGpsError('Este navegador no soporta geolocalización.');
+      setGpsError('Tu navegador no soporta GPS. Puedes guardar los datos manualmente.');
       return;
     }
     setGpsLoading(true);
@@ -128,36 +206,86 @@ export function FieldSurveyPanel({
         setGpsLoading(false);
         setGpsError(
           err.code === 1
-            ? 'Permiso de ubicación denegado. Activa el GPS en tu navegador para capturar coordenadas en campo.'
-            : 'No se pudo obtener lectura GPS. Intenta acercarte a un espacio abierto.'
+            ? 'Permiso de GPS denegado. Activa la ubicación en tu navegador o continúa sin GPS.'
+            : 'Señal GPS débil en interiores. Puedes reintentar o guardar sin coordenada.'
         );
       },
       {enableHighAccuracy: true, maximumAge: 0, timeout: 15000}
     );
   };
 
-  const handleSaveSurveyEntry = (e: React.FormEvent) => {
+  const handleStartMarkPoint = () => {
+    setLastSavedNotice(null);
+    setDrawerView('none');
+    setPhase('details');
+    triggerGpsCapture();
+  };
+
+  const handleManualEntryWithoutGps = () => {
+    setLastSavedNotice(null);
+    setDrawerView('none');
+    setGpsError(null);
+    setPhase('details');
+  };
+
+  const handleToggleVoice = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+    const Ctor = getSpeechRecognitionCtor();
+    if (!Ctor) return;
+
+    const recognition = new Ctor();
+    recognition.lang = 'es-MX';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0]?.[0]?.transcript?.trim();
+      if (transcript) {
+        setSpaceName((prev) => (prev ? `${prev} ${transcript}` : transcript));
+      }
+    };
+    recognition.onerror = () => {
+      setIsListening(false);
+    };
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    setIsListening(true);
+    recognition.start();
+  };
+
+  const handleSaveAndContinue = (e: React.FormEvent) => {
     e.preventDefault();
-    setSaveMessage(null);
 
     if (surveyorName.trim()) {
       localStorage.setItem(SURVEYOR_STORAGE_KEY, surveyorName.trim());
     }
 
     const today = new Date().toISOString().slice(0, 10);
-    const hasNewSpace = spaceName.trim().length > 0;
+    const isBuildingOnly = entryKind === 'Edificio';
+    const hasSpaceInput =
+      !isBuildingOnly &&
+      (spaceName.trim().length > 0 || spaceCode.trim().length > 0);
 
-    const newSpace: CampusSpace | null = hasNewSpace
+    const newSpace: CampusSpace | null = hasSpaceInput
       ? {
           id: `sp-${Date.now().toString(36)}`,
           code: spaceCode.trim() || 'S/N',
-          name: spaceName.trim(),
-          kind: spaceKind,
+          name: spaceName.trim() || `${entryKind} ${spaceCode.trim()}`,
+          kind: entryKind as SpaceKind,
           floor: spaceFloor.trim() || 'Planta Baja',
           schedule: spaceSchedule.trim() || undefined,
           notes: spaceNotes.trim() || undefined,
         }
       : null;
+
+    let savedSummary = '';
 
     if (targetBuildingId === '__new__') {
       if (!newBuildingName.trim()) return;
@@ -190,7 +318,11 @@ export function FieldSurveyPanel({
       setTargetBuildingId(newEntry.id);
       setNewBuildingCode('');
       setNewBuildingName('');
+      savedSummary = newSpace
+        ? `${newSpace.kind} ${newSpace.code} en ${newEntry.code}`
+        : `Edificio ${newEntry.code} — ${newEntry.name}`;
     } else {
+      const target = buildings.find((b) => b.id === targetBuildingId);
       const updated = buildings.map((b) => {
         if (b.id !== targetBuildingId) return b;
         return {
@@ -204,15 +336,34 @@ export function FieldSurveyPanel({
         };
       });
       onSaveBuildings(updated);
+      savedSummary = newSpace
+        ? `${newSpace.kind} ${newSpace.code} en ${target?.code ?? 'ITD'}`
+        : `GPS guardado en ${target?.code ?? 'edificio'}`;
     }
 
+    recognitionRef.current?.stop();
+    setIsListening(false);
     setSpaceCode('');
     setSpaceName('');
     setSpaceSchedule('');
     setSpaceNotes('');
-    setSaveMessage(
-      'Registro guardado en la base de datos local. Puedes seguir capturando el siguiente salón.'
-    );
+    setGpsCoords(null);
+    setGpsError(null);
+    onClearPickedCoords?.();
+    setShowExtras(false);
+    setLastSavedNotice(`${savedSummary}. Listo para el siguiente punto.`);
+    setPhase('walk');
+  };
+
+  const handleDeleteSpace = (buildingId: string, spaceId: string) => {
+    const updated = buildings.map((b) => {
+      if (b.id !== buildingId) return b;
+      return {
+        ...b,
+        spaces: b.spaces.filter((sp) => sp.id !== spaceId),
+      };
+    });
+    onSaveBuildings(updated);
   };
 
   const handleDownloadCsv = () => {
@@ -238,343 +389,534 @@ export function FieldSurveyPanel({
   };
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto bg-slate-50 p-4 md:p-6">
-      <div className="mx-auto w-full max-w-3xl space-y-5">
-        {/* Header & Survey Metrics */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="flex h-full flex-col overflow-y-auto bg-slate-50 px-4 py-5 md:py-8">
+      <div className="mx-auto w-full max-w-xl">
+        {/* Single Focused Card */}
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          {/* Card Header */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">
-                Brigada de Levantamiento GPS — Servicio Social ITD
-              </h2>
-              <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                Recorre cada edificio, aula, laboratorio u oficina, captura la
-                coordenada GPS en sitio y genera la base de datos oficial del
-                campus (exportable a Excel/CSV y JSON).
+              <h1 className="text-base font-bold tracking-tight text-slate-900 md:text-lg">
+                Brigada GPS · Campus ITD
+              </h1>
+              <p className="font-mono-tabular mt-0.5 text-xs text-slate-500">
+                {stats.totalBuildings} edificios · {stats.totalSpaces} aulas/áreas ·{' '}
+                {stats.pinnedBuildings} con GPS
               </p>
             </div>
-            <div className="flex gap-4 text-right font-mono-tabular">
-              <div>
-                <div className="text-lg font-bold text-slate-900">
-                  {stats.totalBuildings}
-                </div>
-                <div className="text-[11px] text-slate-500">Edificios</div>
-              </div>
-              <div>
-                <div className="text-lg font-bold text-[#6F1D3A]">
-                  {stats.totalSpaces}
-                </div>
-                <div className="text-[11px] text-slate-500">Aulas / Áreas</div>
-              </div>
-              <div>
-                <div className="text-lg font-bold text-emerald-700">
-                  {stats.pinnedBuildings}
-                </div>
-                <div className="text-[11px] text-slate-500">Con GPS</div>
-              </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={handleDownloadCsv}
+                title="Descargar Excel (CSV)"
+                className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800 whitespace-nowrap shrink-0"
+              >
+                <FileSpreadsheet className="h-3.5 w-3.5" />
+                CSV
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadJson}
+                title="Descargar JSON"
+                className="inline-flex min-h-[38px] items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 whitespace-nowrap shrink-0"
+              >
+                <Download className="h-3.5 w-3.5" />
+                JSON
+              </button>
+              {hasMapsKey && onExitSurvey && (
+                <button
+                  type="button"
+                  onClick={onExitSurvey}
+                  className="inline-flex min-h-[38px] items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 whitespace-nowrap shrink-0"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  Mapa
+                </button>
+              )}
             </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-            <button
-              type="button"
-              onClick={handleDownloadCsv}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-emerald-800"
-            >
-              <FileSpreadsheet className="h-3.5 w-3.5" />
-              Descargar Base de Datos CSV (Excel)
-            </button>
-            <button
-              type="button"
-              onClick={handleDownloadJson}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50"
-            >
-              <Download className="h-3.5 w-3.5" />
-              Descargar campus-directory.json
-            </button>
-          </div>
-        </div>
-
-        {/* Field Capture Form */}
-        <form
-          onSubmit={handleSaveSurveyEntry}
-          className="space-y-4 rounded-xl border border-slate-200 bg-white p-5"
-        >
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-            <ClipboardList className="h-4 w-4 text-[#6F1D3A]" />
-            <h3 className="text-sm font-bold text-slate-900">
-              1. Captura rápida en sitio
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label className="text-xs font-semibold text-slate-700">
-                Nombre del alumno / brigadista
-              </label>
+          {/* Secondary Compact Tools Row */}
+          <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/70 px-5 py-2.5">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <span className="text-[11px] font-semibold text-slate-500 whitespace-nowrap">
+                Brigadista:
+              </span>
               <input
                 type="text"
                 value={surveyorName}
-                onChange={(e) => setSurveyorName(e.target.value)}
-                placeholder="Ej. Ana López (Servicio Social)"
-                className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-[#6F1D3A] focus:bg-white focus:outline-none"
+                onChange={(e) => {
+                  setSurveyorName(e.target.value);
+                  localStorage.setItem(SURVEYOR_STORAGE_KEY, e.target.value);
+                }}
+                placeholder="Tu nombre (opcional)"
+                className="min-w-0 flex-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#6F1D3A] focus:outline-none"
               />
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-slate-700">
-                Edificio donde te encuentras
-              </label>
-              <select
-                value={targetBuildingId}
-                onChange={(e) => setTargetBuildingId(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-[#6F1D3A] focus:bg-white focus:outline-none"
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() =>
+                  setDrawerView((v) => (v === 'map' ? 'none' : 'map'))
+                }
+                className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors ${
+                  drawerView === 'map'
+                    ? 'border-[#6F1D3A] bg-[#6F1D3A] text-white'
+                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                }`}
               >
-                <option value="__new__">+ Registrar nuevo edificio</option>
-                {buildings.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.code} — {b.name}
-                  </option>
-                ))}
-              </select>
+                <MapIcon className="h-3 w-3" />
+                Plano
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setDrawerView((v) => (v === 'records' ? 'none' : 'records'))
+                }
+                className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors ${
+                  drawerView === 'records'
+                    ? 'border-[#6F1D3A] bg-[#6F1D3A] text-white'
+                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                <ListChecks className="h-3 w-3" />
+                Registros
+              </button>
             </div>
           </div>
 
-          {targetBuildingId === '__new__' && (
-            <div className="grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 sm:grid-cols-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-700">
-                  Clave edificio
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newBuildingCode}
-                  onChange={(e) => setNewBuildingCode(e.target.value)}
-                  placeholder="Ej. EDIF-H"
-                  className="font-mono-tabular mt-1 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="text-xs font-semibold text-slate-700">
-                  Nombre del edificio
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newBuildingName}
-                  onChange={(e) => setNewBuildingName(e.target.value)}
-                  placeholder="Ej. Edificio H de Aulas"
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-700">
-                  Categoría
-                </label>
-                <select
-                  value={newBuildingCategory}
-                  onChange={(e) =>
-                    setNewBuildingCategory(e.target.value as BuildingCategory)
-                  }
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm"
+          {/* Optional Reference Map Drawer */}
+          {drawerView === 'map' && (
+            <div className="border-b border-slate-200 bg-slate-100 p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-800">
+                  Plano oficial de Unidades Académicas ITD
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setDrawerView('none')}
+                  className="rounded p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-900"
                 >
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <img
+                src="/assets/aistudio/image_0f38b691.png"
+                alt="Plano oficial de unidades académicas del Instituto Tecnológico de Durango"
+                referrerPolicy="no-referrer"
+                className="mx-auto max-h-[420px] w-auto rounded-lg border border-slate-200 object-contain"
+              />
+            </div>
+          )}
+
+          {/* Optional Records Drawer */}
+          {drawerView === 'records' && (
+            <div className="max-h-[400px] overflow-y-auto border-b border-slate-200 bg-slate-50 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-900">
+                  Registros capturados en este dispositivo
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setDrawerView('none')}
+                  className="rounded p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-900"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
+                {buildings.map((b) => (
+                  <div key={b.id} className="px-3.5 py-2.5 text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-slate-900">
+                        <span className="font-mono-tabular mr-1.5 text-[#6F1D3A]">
+                          {b.code}
+                        </span>
+                        {b.name}
+                      </span>
+                      <span className="font-mono-tabular shrink-0 text-[11px] text-slate-500">
+                        {b.customLatLng
+                          ? `${b.customLatLng.lat.toFixed(5)}, ${b.customLatLng.lng.toFixed(5)}`
+                          : 'Sin GPS'}
+                      </span>
+                    </div>
+                    {b.spaces.length > 0 && (
+                      <div className="mt-1.5 space-y-1 border-t border-slate-100 pt-1.5">
+                        {b.spaces.map((sp) => (
+                          <div
+                            key={sp.id}
+                            className="flex items-center justify-between gap-2 text-[11px] text-slate-600"
+                          >
+                            <span>
+                              <strong className="font-mono-tabular text-slate-800">
+                                {sp.code}
+                              </strong>{' '}
+                              · {sp.name} · {sp.floor}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSpace(b.id, sp.id)}
+                              title="Eliminar registro"
+                              className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
-          {/* GPS Capture Box */}
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3.5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <div className="text-xs font-semibold text-slate-800">
-                  Coordenadas GPS del edificio / acceso
+          {/* PHASE 1: WALK & TAP */}
+          {phase === 'walk' && (
+            <div className="space-y-5 p-5 md:p-6">
+              {lastSavedNotice && (
+                <div className="flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-900">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-700" />
+                  <span>{lastSavedNotice}</span>
                 </div>
-                {activeCoords ? (
-                  <div className="font-mono-tabular mt-1 text-xs font-semibold text-emerald-800">
-                    Lat: {activeCoords.lat.toFixed(6)} · Lng:{' '}
-                    {activeCoords.lng.toFixed(6)}
-                    {'accuracy' in activeCoords && activeCoords.accuracy
-                      ? ` (±${activeCoords.accuracy} m)`
-                      : ''}
-                  </div>
-                ) : (
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    Párate frente al edificio y presiona capturar para guardar su
-                    latitud y longitud exacta.
+              )}
+
+              {/* Current Building Selector */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700">
+                  Edificio actual donde estás caminando
+                </label>
+                <select
+                  value={targetBuildingId}
+                  onChange={(e) => setTargetBuildingId(e.target.value)}
+                  className="mt-1.5 min-h-[44px] w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6F1D3A] focus:bg-white focus:outline-none"
+                >
+                  <option value="__new__">+ Registrar nuevo edificio</option>
+                  {buildings.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.code} — {b.name}
+                    </option>
+                  ))}
+                </select>
+                {selectedBuilding && (
+                  <p className="font-mono-tabular mt-1.5 text-[11px] text-slate-500">
+                    {selectedBuilding.spaces.length} áreas registradas ·{' '}
+                    {selectedBuilding.customLatLng
+                      ? `GPS: ${selectedBuilding.customLatLng.lat.toFixed(5)}, ${selectedBuilding.customLatLng.lng.toFixed(5)}`
+                      : 'Aún sin coordenada GPS'}
                   </p>
                 )}
               </div>
 
-              <div className="flex flex-wrap gap-2">
+              {/* Primary Big Walk & Tap Button */}
+              <button
+                type="button"
+                onClick={handleStartMarkPoint}
+                className="flex min-h-[88px] w-full flex-col items-center justify-center gap-1.5 rounded-2xl bg-[#6F1D3A] px-6 py-5 text-white shadow-sm transition-colors hover:bg-[#58162d] active:scale-[0.99]"
+              >
+                <div className="flex items-center gap-2.5 text-base font-bold md:text-lg">
+                  <LocateFixed className="h-6 w-6" />
+                  Marcar punto aquí (Capturar GPS)
+                </div>
+                <span className="text-xs font-normal text-white/85">
+                  Presiona frente al salón, laboratorio o entrada y luego
+                  escribe o dicta el nombre
+                </span>
+              </button>
+
+              {/* Secondary Manual / Map Actions */}
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
                 <button
                   type="button"
-                  onClick={handleCaptureGps}
-                  disabled={gpsLoading}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                  onClick={handleManualEntryWithoutGps}
+                  className="min-h-[40px] rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                 >
-                  <LocateFixed className="h-3.5 w-3.5" />
-                  {gpsLoading ? 'Leyendo GPS...' : 'Capturar GPS actual'}
+                  Capturar datos sin GPS
                 </button>
                 {hasMapsKey && onRequestMapPick && (
                   <button
                     type="button"
                     onClick={onRequestMapPick}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                    className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                   >
                     <Crosshair className="h-3.5 w-3.5" />
-                    Marcar en mapa
+                    Marcar en el mapa
                   </button>
                 )}
               </div>
             </div>
-            {gpsError && (
-              <p className="mt-2 text-xs text-amber-800">{gpsError}</p>
-            )}
-          </div>
+          )}
 
-          {/* Room / Aula / Lab / Office Entry */}
-          <div className="border-t border-slate-100 pt-3">
-            <div className="text-xs font-semibold text-slate-800">
-              2. Salón, aula, laboratorio u oficina dentro del edificio
-              (opcional si solo quieres fijar el edificio)
-            </div>
-            <div className="mt-2.5 grid grid-cols-1 gap-3 sm:grid-cols-6">
-              <div className="sm:col-span-1">
-                <label className="text-[11px] font-medium text-slate-600">
-                  Número / Clave
-                </label>
-                <input
-                  type="text"
-                  value={spaceCode}
-                  onChange={(e) => setSpaceCode(e.target.value)}
-                  placeholder="Ej. A-204"
-                  className="font-mono-tabular mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-sm"
-                />
+          {/* PHASE 2: QUICK INFO CAPTURE */}
+          {phase === 'details' && (
+            <form onSubmit={handleSaveAndContinue} className="space-y-4 p-5 md:p-6">
+              {/* Live GPS Lock Strip */}
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5">
+                <div className="min-w-0 flex-1">
+                  {gpsLoading ? (
+                    <span className="text-xs font-semibold text-slate-700">
+                      Obteniendo coordenada GPS... (puedes llenar los datos
+                      mientras tanto)
+                    </span>
+                  ) : activeCoords ? (
+                    <div className="font-mono-tabular text-xs font-semibold text-emerald-800">
+                      GPS fijado: {activeCoords.lat.toFixed(6)},{' '}
+                      {activeCoords.lng.toFixed(6)}
+                      {'accuracy' in activeCoords && activeCoords.accuracy
+                        ? ` · ±${activeCoords.accuracy} m`
+                        : ''}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-slate-600">
+                      {gpsError ?? 'Sin coordenada GPS fijada en este punto'}
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={triggerGpsCapture}
+                  disabled={gpsLoading}
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-100 disabled:opacity-50 whitespace-nowrap shrink-0"
+                >
+                  <LocateFixed className="h-3.5 w-3.5" />
+                  {gpsLoading ? 'Buscando...' : 'Recapturar'}
+                </button>
               </div>
-              <div className="sm:col-span-3">
-                <label className="text-[11px] font-medium text-slate-600">
-                  Nombre del salón, laboratorio u oficina
-                </label>
-                <input
-                  type="text"
-                  value={spaceName}
-                  onChange={(e) => setSpaceName(e.target.value)}
-                  placeholder="Ej. Aula 204 / Lab. Electrónica Digital"
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                />
-              </div>
-              <div className="sm:col-span-1">
-                <label className="text-[11px] font-medium text-slate-600">
-                  Tipo
+
+              {/* Building Selector */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700">
+                  Edificio
                 </label>
                 <select
-                  value={spaceKind}
-                  onChange={(e) => setSpaceKind(e.target.value as SpaceKind)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm"
+                  value={targetBuildingId}
+                  onChange={(e) => setTargetBuildingId(e.target.value)}
+                  className="mt-1 min-h-[44px] w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-[#6F1D3A] focus:bg-white focus:outline-none"
                 >
-                  {SPACE_KINDS.map((k) => (
-                    <option key={k} value={k}>
-                      {k}
+                  <option value="__new__">+ Registrar nuevo edificio</option>
+                  {buildings.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.code} — {b.name}
                     </option>
                   ))}
                 </select>
               </div>
-              <div className="sm:col-span-1">
-                <label className="text-[11px] font-medium text-slate-600">
-                  Piso
+
+              {targetBuildingId === '__new__' && (
+                <div className="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-4">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">
+                      Clave
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newBuildingCode}
+                      onChange={(e) => setNewBuildingCode(e.target.value)}
+                      placeholder="Ej. SC"
+                      className="font-mono-tabular mt-1 min-h-[42px] w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-semibold text-slate-700">
+                      Nombre del edificio
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newBuildingName}
+                      onChange={(e) => setNewBuildingName(e.target.value)}
+                      placeholder="Ej. Sistemas y Computación"
+                      className="mt-1 min-h-[42px] w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">
+                      Categoría
+                    </label>
+                    <select
+                      value={newBuildingCategory}
+                      onChange={(e) =>
+                        setNewBuildingCategory(
+                          e.target.value as BuildingCategory
+                        )
+                      }
+                      className="mt-1 min-h-[42px] w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm"
+                    >
+                      {CATEGORIES.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* One-tap Type Selection */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700">
+                  ¿Qué punto estás registrando?
                 </label>
-                <input
-                  type="text"
-                  value={spaceFloor}
-                  onChange={(e) => setSpaceFloor(e.target.value)}
-                  placeholder="Piso 1"
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-sm"
-                />
+                <div className="mt-1.5 grid grid-cols-3 gap-2">
+                  {ENTRY_KINDS.map((item) => (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => setEntryKind(item.value)}
+                      className={`min-h-[42px] rounded-xl border px-2.5 py-2 text-xs font-semibold transition-colors whitespace-nowrap ${
+                        entryKind === item.value
+                          ? 'border-[#6F1D3A] bg-[#6F1D3A] text-white'
+                          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <input
-                type="text"
-                value={spaceSchedule}
-                onChange={(e) => setSpaceSchedule(e.target.value)}
-                placeholder="Horario (ej. L-V 08:00 - 15:00)"
-                className="rounded-lg border border-slate-200 px-3 py-2 text-xs"
-              />
-              <input
-                type="text"
-                value={spaceNotes}
-                onChange={(e) => setSpaceNotes(e.target.value)}
-                placeholder="Referencia (ej. Junto a escalera norte, rampa)"
-                className="rounded-lg border border-slate-200 px-3 py-2 text-xs"
-              />
-            </div>
-          </div>
+              {/* Room / Lab / Office Inputs */}
+              {entryKind !== 'Edificio' && (
+                <>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div>
+                      <label className="text-xs font-semibold text-slate-700">
+                        Número o clave
+                      </label>
+                      <input
+                        type="text"
+                        value={spaceCode}
+                        onChange={(e) => setSpaceCode(e.target.value)}
+                        placeholder="Ej. SC-101"
+                        className="font-mono-tabular mt-1 min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-[#6F1D3A] focus:outline-none"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-slate-700">
+                          Nombre del lugar
+                        </label>
+                        {speechSupported && (
+                          <button
+                            type="button"
+                            onClick={handleToggleVoice}
+                            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold transition-colors ${
+                              isListening
+                                ? 'bg-red-600 text-white'
+                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                            }`}
+                          >
+                            {isListening ? (
+                              <>
+                                <MicOff className="h-3 w-3" />
+                                Escuchando...
+                              </>
+                            ) : (
+                              <>
+                                <Mic className="h-3 w-3" />
+                                Dictar por voz
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        value={spaceName}
+                        onChange={(e) => setSpaceName(e.target.value)}
+                        placeholder="Ej. Aula 101 / Lab. Redes / Jefatura"
+                        className="mt-1 min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-[#6F1D3A] focus:outline-none"
+                      />
+                    </div>
+                  </div>
 
-          {saveMessage && (
-            <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-900">
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-700" />
-              <span>{saveMessage}</span>
-            </div>
+                  {/* Quick Floor Chips */}
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">
+                      Nivel / Piso
+                    </label>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {QUICK_FLOORS.map((fl) => (
+                        <button
+                          key={fl}
+                          type="button"
+                          onClick={() => setSpaceFloor(fl)}
+                          className={`min-h-[38px] rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap ${
+                            spaceFloor === fl
+                              ? 'border-slate-900 bg-slate-900 text-white'
+                              : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                          }`}
+                        >
+                          {fl}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Collapsible Extras */}
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setShowExtras((v) => !v)}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900"
+                    >
+                      {showExtras ? (
+                        <ChevronUp className="h-3.5 w-3.5" />
+                      ) : (
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      )}
+                      {showExtras
+                        ? 'Ocultar horario y notas'
+                        : 'Agregar horario o referencia (opcional)'}
+                    </button>
+
+                    {showExtras && (
+                      <div className="mt-2 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                        <input
+                          type="text"
+                          value={spaceSchedule}
+                          onChange={(e) => setSpaceSchedule(e.target.value)}
+                          placeholder="Horario (ej. L-V 08:00 - 15:00)"
+                          className="min-h-[40px] rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                        />
+                        <input
+                          type="text"
+                          value={spaceNotes}
+                          onChange={(e) => setSpaceNotes(e.target.value)}
+                          placeholder="Referencia (ej. Junto a escaleras)"
+                          className="min-h-[40px] rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Bottom Primary Actions */}
+              <div className="flex items-center gap-3 border-t border-slate-100 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    recognitionRef.current?.stop();
+                    setIsListening(false);
+                    setPhase('walk');
+                  }}
+                  className="min-h-[48px] rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 whitespace-nowrap shrink-0"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="min-h-[48px] flex-1 rounded-xl bg-[#6F1D3A] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#58162d]"
+                >
+                  Guardar y seguir caminando
+                </button>
+              </div>
+            </form>
           )}
-
-          <div className="flex justify-end pt-2">
-            <button
-              type="submit"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#6F1D3A] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#58162d]"
-            >
-              <Plus className="h-4 w-4" />
-              Guardar en base de datos
-            </button>
-          </div>
-        </form>
-
-        {/* Live Table of Captured Buildings & Spaces */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <h3 className="text-sm font-bold text-slate-900">
-            Resumen actual del inventario del campus
-          </h3>
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-slate-200 text-slate-500">
-                <tr>
-                  <th className="py-2 pr-3 font-semibold">Clave</th>
-                  <th className="py-2 pr-3 font-semibold">Edificio</th>
-                  <th className="py-2 pr-3 font-semibold">Coordenadas GPS</th>
-                  <th className="py-2 text-right font-semibold">
-                    Aulas / Áreas
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {buildings.map((b) => (
-                  <tr key={b.id} className="hover:bg-slate-50">
-                    <td className="font-mono-tabular py-2 pr-3 font-semibold text-[#6F1D3A]">
-                      {b.code}
-                    </td>
-                    <td className="py-2 pr-3 font-medium text-slate-900">
-                      {b.name}
-                    </td>
-                    <td className="font-mono-tabular py-2 pr-3 text-slate-600">
-                      {b.customLatLng
-                        ? `${b.customLatLng.lat.toFixed(5)}, ${b.customLatLng.lng.toFixed(5)}`
-                        : 'Sin pin GPS'}
-                    </td>
-                    <td className="font-mono-tabular py-2 text-right text-slate-700">
-                      {b.spaces.length}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </div>
       </div>
     </div>
