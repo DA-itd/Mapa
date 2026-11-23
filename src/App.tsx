@@ -9,6 +9,7 @@ import {
   type SidebarTab,
 } from './components/CampusSidebar';
 import {ContributeModal} from './components/ContributeModal';
+import {FieldSurveyPanel} from './components/FieldSurveyPanel';
 import type {
   CampusBuildingEntry,
   ComputedRouteResult,
@@ -51,6 +52,7 @@ export default function App() {
 
   // UI navigation state
   const [activeTab, setActiveTab] = useState<SidebarTab>('explore');
+  const [surveyMode, setSurveyMode] = useState<boolean>(false);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
     null
@@ -90,6 +92,9 @@ export default function App() {
     lat: number;
     lng: number;
   } | null>(null);
+  const [pickReturnTarget, setPickReturnTarget] = useState<'modal' | 'survey'>(
+    'modal'
+  );
 
   useEffect(() => {
     const onQuotaExceeded = () => setQuotaExceeded(true);
@@ -217,10 +222,14 @@ export default function App() {
       } else if (mapPickMode === 'pin-building') {
         setPickedBuildingCoords(coords);
         setMapPickMode('none');
-        setContributeOpen(true);
+        if (pickReturnTarget === 'survey') {
+          setSurveyMode(true);
+        } else {
+          setContributeOpen(true);
+        }
       }
     },
-    [mapPickMode]
+    [mapPickMode, pickReturnTarget]
   );
 
   const handleEditBuilding = useCallback(
@@ -254,6 +263,8 @@ export default function App() {
   );
 
   const handleRequestPinBuilding = useCallback((loc: ResolvedCampusLocation) => {
+    setSurveyMode(false);
+    setPickReturnTarget('modal');
     setPendingDraft(null);
     setEditingBuildingId(loc.communityEntryId ?? null);
     setMapPickMode('pin-building');
@@ -261,6 +272,8 @@ export default function App() {
 
   const handleRequestMapPickForDraft = useCallback(
     (draft: CampusBuildingEntry) => {
+      setSurveyMode(false);
+      setPickReturnTarget('modal');
       setPendingDraft(draft);
       setContributeOpen(false);
       setMapPickMode('pin-building');
@@ -325,11 +338,14 @@ export default function App() {
           <button
             type="button"
             onClick={() => {
+              setSurveyMode(false);
               setActiveTab('explore');
               setSidebarOpen(true);
             }}
             className={`whitespace-nowrap shrink-0 transition-colors hover:text-slate-900 ${
-              activeTab === 'explore' ? 'font-semibold text-[#6F1D3A]' : ''
+              !surveyMode && activeTab === 'explore'
+                ? 'font-semibold text-[#6F1D3A]'
+                : ''
             }`}
           >
             Explorar
@@ -337,11 +353,14 @@ export default function App() {
           <button
             type="button"
             onClick={() => {
+              setSurveyMode(false);
               setActiveTab('routes');
               setSidebarOpen(true);
             }}
             className={`whitespace-nowrap shrink-0 transition-colors hover:text-slate-900 ${
-              activeTab === 'routes' ? 'font-semibold text-[#6F1D3A]' : ''
+              !surveyMode && activeTab === 'routes'
+                ? 'font-semibold text-[#6F1D3A]'
+                : ''
             }`}
           >
             Rutas
@@ -349,25 +368,26 @@ export default function App() {
           <button
             type="button"
             onClick={() => {
+              setSurveyMode(false);
               setActiveTab('assistant');
               setSidebarOpen(true);
             }}
             className={`whitespace-nowrap shrink-0 transition-colors hover:text-slate-900 ${
-              activeTab === 'assistant' ? 'font-semibold text-[#6F1D3A]' : ''
+              !surveyMode && activeTab === 'assistant'
+                ? 'font-semibold text-[#6F1D3A]'
+                : ''
             }`}
           >
             Guía Maps
           </button>
           <button
             type="button"
-            onClick={() => {
-              setPendingDraft(null);
-              setEditingBuildingId(null);
-              setContributeOpen(true);
-            }}
-            className="whitespace-nowrap shrink-0 transition-colors hover:text-slate-900"
+            onClick={() => setSurveyMode(true)}
+            className={`whitespace-nowrap shrink-0 transition-colors hover:text-slate-900 ${
+              surveyMode ? 'font-semibold text-[#6F1D3A]' : ''
+            }`}
           >
-            GitHub y Vercel
+            Brigada GPS
           </button>
         </nav>
 
@@ -434,22 +454,36 @@ export default function App() {
           </div>
         )}
 
-        {/* Map Viewport (explicit min height to prevent 0x0 collapse) */}
+        {/* Map / Field Survey Viewport */}
         <section className="relative min-h-[40vh] flex-1 bg-slate-200 md:min-h-0">
           {keyLoading ? (
             <div className="flex h-full items-center justify-center text-sm text-slate-600">
               Cargando configuración de Google Maps...
             </div>
-          ) : !mapsApiKey ? (
-            <div className="flex h-full flex-col items-center justify-center p-6 text-center">
-              <p className="text-sm font-semibold text-slate-900">
-                Google Maps no está configurado en este entorno.
-              </p>
-              <p className="mt-1 max-w-md text-xs text-slate-600">
-                Configura la clave de Google Maps Platform en el entorno o en
-                Vercel (<code className="font-mono">VITE_GOOGLE_MAPS_API_KEY</code>)
-                para visualizar el mapa interactivo del campus.
-              </p>
+          ) : surveyMode || !mapsApiKey ? (
+            <div className="flex h-full flex-col">
+              {!mapsApiKey && (
+                <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-950">
+                  Vista previa en modo levantamiento GPS (sin clave de Google
+                  Maps activa). Los alumnos pueden capturar coordenadas, aulas y
+                  exportar la base de datos CSV/JSON desde aquí.
+                </div>
+              )}
+              <div className="min-h-0 flex-1">
+                <FieldSurveyPanel
+                  buildings={buildings}
+                  onSaveBuildings={handleSaveBuildings}
+                  hasMapsKey={Boolean(mapsApiKey)}
+                  pickedCoords={pickedBuildingCoords}
+                  onClearPickedCoords={() => setPickedBuildingCoords(null)}
+                  onRequestMapPick={() => {
+                    setPickReturnTarget('survey');
+                    setSurveyMode(false);
+                    setMapPickMode('pin-building');
+                  }}
+                  onFocusCoords={handleFocusCoords}
+                />
+              </div>
             </div>
           ) : (
             <APIProvider
