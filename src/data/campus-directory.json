@@ -1,0 +1,221 @@
+{
+  "campusName": "Instituto Tecnológico de Durango (TecNM)",
+  "version": "1.0.0",
+  "repositoryHint": "Edita este archivo vía Pull Request en GitHub para actualizar edificios, oficinas, aulas y laboratorios.",
+  "buildings": [
+    {
+      "id": "itd-centro-informacion",
+      "code": "CI",
+      "name": "Centro de Información (Biblioteca)",
+      "category": "Biblioteca e Información",
+      "description": "Acervo bibliográfico, salas de lectura silenciosa, cubículos de estudio en equipo y hemeroteca.",
+      "matchKeywords": ["centro de información", "biblioteca", "informacion"],
+      "customLatLng": null,
+      "accessibilityNotes": "Rampa de acceso en entrada principal y elevador interior.",
+      "spaces": [
+        {
+          "id": "ci-pb-prestamo",
+          "code": "CI-PB",
+          "name": "Módulo de Préstamo y Credencialización",
+          "kind": "Servicio",
+          "floor": "Planta Baja",
+          "schedule": "L-V 08:00 - 20:00"
+        },
+        {
+          "id": "ci-p1-sala-general",
+          "code": "CI-101",
+          "name": "Sala General de Lectura y Consulta",
+          "kind": "Aula",
+          "floor": "Piso 1",
+          "schedule": "L-V 08:00 - 20:00"
+        },
+        {
+          "id": "ci-p1-cubiculos",
+          "code": "CI-102",
+          "name": "Cubículos de Estudio Colaborativo",
+          "kind": "Servicio",
+          "floor": "Piso 1",
+          "notes": "Reservación previa en mostrador."
+        }
+      ]
+    },
+    {
+      "id": "itd-centro-computo",
+      "code": "CC",
+      "name": "Centro de Cómputo y Sistemas",
+      "category": "Laboratorios",
+      "description": "Laboratorios de cómputo, redes, desarrollo de software y jefatura de Sistemas y Computación.",
+      "matchKeywords": ["centro de cómputo", "computo", "sistemas"],
+      "customLatLng": null,
+      "accessibilityNotes": "Acceso a nivel de andador en planta baja.",
+      "spaces": [
+        {
+          "id": "cc-oficina-sistemas",
+          "code": "DSC-01",
+          "name": "Depto. de Sistemas y Computación",
+          "kind": "Oficina",
+          "floor": "Planta Baja",
+          "schedule": "L-V 08:00 - 15:00 / 16:00 - 19:00"
+        },
+        {
+          "id": "cc-lab-redes",
+          "code": "LAB-RED",
+          "name": "Laboratorio de Redes y Telecomunicaciones",
+          "kind": "Laboratorio",
+          "floor": "Piso 1"
+        },
+        {
+          "id": "cc-lab-sw",
+          "code": "LAB-SW1",
+          "name": "Laboratorio de Programación e Ingeniería de Software",
+          "kind": "Laboratorio",
+          "floor": "Piso 1"
+        }
+      ]
+    },
+    {
+      "id": "itd-administrativo",
+      "code": "ADM",
+      "name": "Edificio Administrativo y Dirección",
+      "category": "Administrativo",
+      "description": "Dirección del plantel, subdirecciones, recursos financieros, gestión tecnológica y vinculación.",
+      "matchKeywords": ["administrativo", "dirección", "rectoria", "instituto tecnológico de durango"],
+      "customLatLng": null,
+      "accessibilityNotes": "Acceso peatonal por plaza cívica.",
+      "spaces": [
+        {
+          "id": "adm-direccion",
+          "code": "DIR-01",
+          "name": "Dirección General del ITD",
+          "kind": "Oficina",
+          "floor": "Piso 1",
+          "schedule": "L-V 09:00 - 15:00"
+        },
+        {
+          "id": "adm-servicios-escolares",
+          "code": "SE-01",
+          "name": "Departamento de Servicios Escolares",
+          "kind": "Servicio",
+          "floor": "Planta Baja",
+          "schedule": "L-V 08:30 - 14:30",
+          "notes": "Constancias, kardex, reinscripciones y titulación."
+        },
+        {
+          "id": "adm-vinculacion",
+          "code": "GTV-01",
+          "name": "Gestión Tecnológica y Vinculación",
+          "kind": "Oficina",
+          "floor": "Planta Baja",
+          "notes": "Residencias profesionales y servicio social."
+        }
+      ]
+    },
+    {
+      "id": "itd-industrial-mecanica",
+      "code": "ING",
+      "name": "Edificio de Ingenierías y Talleres",
+      "category": "Académico",
+      "description": "Aulas teóricas, talleres de manufactura, metrología y departamentos de Ingeniería Industrial y Mecánica.",
+      "matchKeywords": ["industrial", "mecánica", "mecanica", "ingeniería", "talleres"],
+      "customLatLng": null,
+      "spaces": [
+        {
+          "id": "ing-depto-ind",
+          "code": "DII-01",
+          "name": "Depto. de Ingeniería Industrial",
+          "kind": "Oficina",
+          "floor": "Planta Baja"
+        },
+        {
+          "id": "ing-lab-manufactura",
+          "code": "LAB-CNC",
+          "name": "Laboratorio de Manufactura y CNC",
+          "kind": "Laboratorio",
+          "floor": "Planta Baja"
+        },
+        {
+          "id": "ing-aula-101",
+          "code": "A-101",
+          "name": "Módulo de Aulas Teóricas (101 - 112)",
+          "kind": "Aula",
+          "floor": "Piso 1"
+        }
+      ]
+    },
+    {
+      "id": "itd-quimica-bioquimica",
+      "code": "QUI",
+      "name": "Edificio de Química y Bioquímica",
+      "category": "Laboratorios",
+      "description": "Laboratorios de análisis instrumental, microbiología, química orgánica y coordinación académica.",
+      "matchKeywords": ["química", "quimica", "bioquímica", "bioquimica", "alimentos"],
+      "customLatLng": null,
+      "spaces": [
+        {
+          "id": "qui-depto",
+          "code": "DQB-01",
+          "name": "Depto. de Ingeniería Química y Bioquímica",
+          "kind": "Oficina",
+          "floor": "Planta Baja"
+        },
+        {
+          "id": "qui-lab-micro",
+          "code": "LAB-MB",
+          "name": "Laboratorio de Microbiología y Alimentos",
+          "kind": "Laboratorio",
+          "floor": "Planta Baja"
+        }
+      ]
+    },
+    {
+      "id": "itd-gimnasio-auditorio",
+      "code": "GIM",
+      "name": "Gimnasio Auditorio y Actividades Extraescolares",
+      "category": "Deporte y Cultura",
+      "description": "Cancha principal, eventos cívicos, culturales y coordinación de actividades deportivas.",
+      "matchKeywords": ["gimnasio", "auditorio", "deportivo", "extraescolares", "cancha"],
+      "customLatLng": null,
+      "spaces": [
+        {
+          "id": "gim-extraescolares",
+          "code": "EXT-01",
+          "name": "Depto. de Actividades Extraescolares",
+          "kind": "Oficina",
+          "floor": "Planta Baja"
+        },
+        {
+          "id": "gim-auditorio",
+          "code": "AUD-01",
+          "name": "Duela y Graderío Principal",
+          "kind": "Auditorio",
+          "floor": "Planta Baja"
+        }
+      ]
+    },
+    {
+      "id": "itd-posgrado-investigacion",
+      "code": "DEPI",
+      "name": "División de Estudios de Posgrado e Investigación",
+      "category": "Académico",
+      "description": "Maestrías, doctorados, aulas de seminarios y laboratorios de investigación aplicada.",
+      "matchKeywords": ["posgrado", "investigación", "investigacion", "depi", "maestría"],
+      "customLatLng": null,
+      "spaces": [
+        {
+          "id": "depi-coord",
+          "code": "DEPI-01",
+          "name": "Coordinación de Posgrado e Investigación",
+          "kind": "Oficina",
+          "floor": "Planta Baja"
+        },
+        {
+          "id": "depi-sala",
+          "code": "SEM-01",
+          "name": "Sala de Seminarios y Exámenes de Grado",
+          "kind": "Auditorio",
+          "floor": "Piso 1"
+        }
+      ]
+    }
+  ]
+}

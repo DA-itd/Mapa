@@ -1,0 +1,178 @@
+import type {
+  BuildingCategory,
+  CampusBuildingEntry,
+  DiscoveredGooglePlace,
+  ResolvedCampusLocation,
+} from '../types/campus';
+
+const STORAGE_KEY = 'itd_campus_contributions_v1';
+const REPO_URL_STORAGE_KEY = 'itd_github_repo_url_v1';
+
+export function loadLocalBuildings(
+  baseBuildings: CampusBuildingEntry[]
+): CampusBuildingEntry[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return baseBuildings;
+    const parsed = JSON.parse(raw) as CampusBuildingEntry[];
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return baseBuildings;
+    }
+    return parsed;
+  } catch {
+    return baseBuildings;
+  }
+}
+
+export function saveLocalBuildings(buildings: CampusBuildingEntry[]): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(buildings));
+}
+
+export function clearLocalBuildings(): void {
+  localStorage.removeItem(STORAGE_KEY);
+}
+
+export function hasLocalOverrides(): boolean {
+  return Boolean(localStorage.getItem(STORAGE_KEY));
+}
+
+export function loadGithubRepoUrl(): string {
+  const envUrl =
+    (import.meta.env.VITE_GITHUB_REPO_URL as string | undefined) ?? '';
+  try {
+    return (
+      localStorage.getItem(REPO_URL_STORAGE_KEY) ||
+      envUrl ||
+      'https://github.com/tu-usuario/mapa-campus-itd'
+    );
+  } catch {
+    return envUrl || 'https://github.com/tu-usuario/mapa-campus-itd';
+  }
+}
+
+export function saveGithubRepoUrl(url: string): void {
+  localStorage.setItem(REPO_URL_STORAGE_KEY, url.trim());
+}
+
+function normalizeText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+function inferCategoryFromPlaceTypes(types?: string[]): BuildingCategory {
+  if (!types || types.length === 0) return 'Académico';
+  const joined = types.join(' ').toLowerCase();
+  if (joined.includes('library')) return 'Biblioteca e Información';
+  if (joined.includes('gym') || joined.includes('stadium') || joined.includes('sports')) {
+    return 'Deporte y Cultura';
+  }
+  if (joined.includes('cafe') || joined.includes('restaurant') || joined.includes('store')) {
+    return 'Servicios Estudiantiles';
+  }
+  return 'Académico';
+}
+
+export function mergeCampusLocations(
+  communityBuildings: CampusBuildingEntry[],
+  discoveredPlaces: DiscoveredGooglePlace[]
+): ResolvedCampusLocation[] {
+  const usedPlaceIds: Record<string, boolean> = {};
+  const resolved: ResolvedCampusLocation[] = [];
+
+  for (const entry of communityBuildings) {
+    let matchedPlace: DiscoveredGooglePlace | undefined;
+
+    if (entry.placeId) {
+      matchedPlace = discoveredPlaces.find((p) => p.placeId === entry.placeId);
+    }
+
+    if (!matchedPlace && entry.matchKeywords.length > 0) {
+      matchedPlace = discoveredPlaces.find((p) => {
+        if (usedPlaceIds[p.placeId]) return false;
+        const normalizedPlaceName = normalizeText(p.displayName);
+        return entry.matchKeywords.some((kw) =>
+          normalizedPlaceName.includes(normalizeText(kw))
+        );
+      });
+    }
+
+    if (matchedPlace) {
+      usedPlaceIds[matchedPlace.placeId] = true;
+    }
+
+    const hasCustomCoords =
+      Boolean(entry.customLatLng) &&
+      typeof entry.customLatLng?.lat === 'number' &&
+      typeof entry.customLatLng?.lng === 'number';
+
+    const location = hasCustomCoords
+      ? entry.customLatLng!
+      : matchedPlace
+        ? matchedPlace.location
+        : null;
+
+    const source: ResolvedCampusLocation['source'] = hasCustomCoords
+      ? 'community-pin'
+      : matchedPlace
+        ? 'google-place'
+        : 'unpinned';
+
+    resolved.push({
+      id: entry.id,
+      code: entry.code,
+      name: entry.name,
+      category: entry.category,
+      description: entry.description,
+      location,
+      source,
+      placeId: entry.placeId ?? matchedPlace?.placeId,
+      googleMapsURI: matchedPlace?.googleMapsURI,
+      formattedAddress: matchedPlace?.formattedAddress,
+      accessibilityNotes: entry.accessibilityNotes,
+      updatedBy: entry.updatedBy,
+      updatedAt: entry.updatedAt,
+      spaces: entry.spaces,
+      communityEntryId: entry.id,
+    });
+  }
+
+  for (const place of discoveredPlaces) {
+    if (usedPlaceIds[place.placeId]) continue;
+    resolved.push({
+      id: `gplace-${place.placeId}`,
+      code: 'GM',
+      name: place.displayName,
+      category: inferCategoryFromPlaceTypes(place.types),
+      description:
+        place.formattedAddress ||
+        'Ubicación descubierta en Google Maps dentro o cerca del campus ITD.',
+      location: place.location,
+      source: 'google-place',
+      placeId: place.placeId,
+      googleMapsURI: place.googleMapsURI,
+      formattedAddress: place.formattedAddress,
+      spaces: [],
+    });
+  }
+
+  return resolved;
+}
+
+export function buildDirectoryExportJson(
+  buildings: CampusBuildingEntry[]
+): string {
+  return JSON.stringify(
+    {
+      campusName: 'Instituto Tecnológico de Durango (TecNM)',
+      version: '1.0.0',
+      repositoryHint:
+        'Edita este archivo vía Pull Request en GitHub para actualizar edificios, oficinas, aulas y laboratorios.',
+      buildings,
+    },
+    null,
+    2
+  );
+}

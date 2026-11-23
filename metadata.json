@@ -1,0 +1,6 @@
+{
+  "name": "Mapa Campus ITD",
+  "description": "Mapa interactivo del Instituto Tecnológico de Durango con edificios, áreas, navegación paso a paso y contribuciones estudiantiles vía GitHub y Vercel.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
