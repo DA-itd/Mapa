@@ -27,14 +27,17 @@ import {
   buildDirectoryCsvExport,
   buildDirectoryExportJson,
 } from '../utils/campusStorage';
+import {ItdPlanoFallback} from './ItdPlanoFallback';
 
-const planoAssets = import.meta.glob<string>('../assets/plano-itd.png', {
-  eager: true,
-  query: '?inline',
-  import: 'default',
-});
-const planoItdUrl =
-  Object.values(planoAssets)[0] ?? '/assets/aistudio/image_0f38b691.png';
+const planoAssets = import.meta.glob<string>(
+  '../assets/*.{png,jpg,jpeg,webp}',
+  {
+    eager: true,
+    query: '?inline',
+    import: 'default',
+  }
+);
+const bundledPlanoUrl = Object.values(planoAssets)[0] ?? null;
 
 interface FieldSurveyPanelProps {
   buildings: CampusBuildingEntry[];
@@ -947,21 +950,16 @@ export function FieldSurveyPanel({
           </div>
 
           <div className="flex-1 overflow-auto p-3">
-            {planoLoadError ? (
-              <div className="flex h-full items-center justify-center p-6 text-center text-sm text-slate-300">
-                No se pudo cargar la imagen del plano. Verifica tu conexión e
-                intenta nuevamente.
-              </div>
-            ) : (
-              <div
-                className={
-                  planoZoomed
-                    ? 'min-w-[820px] pb-6'
-                    : 'flex h-full items-center justify-center'
-                }
-              >
+            <div
+              className={
+                planoZoomed
+                  ? 'min-w-[820px] pb-6'
+                  : 'flex min-h-full items-center justify-center'
+              }
+            >
+              {bundledPlanoUrl && !planoLoadError ? (
                 <img
-                  src={planoItdUrl}
+                  src={bundledPlanoUrl}
                   alt="Plano oficial de unidades académicas del Instituto Tecnológico de Durango"
                   onError={() => setPlanoLoadError(true)}
                   className={
@@ -970,8 +968,10 @@ export function FieldSurveyPanel({
                       : 'mx-auto max-h-full w-full max-w-3xl rounded-lg bg-white object-contain'
                   }
                 />
-              </div>
-            )}
+              ) : (
+                <ItdPlanoFallback zoomed={planoZoomed} />
+              )}
+            </div>
           </div>
         </div>
       )}
