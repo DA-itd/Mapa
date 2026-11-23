@@ -986,15 +986,49 @@ function ItdPlanoFallback({zoomed = false}: {zoomed?: boolean}) {
       }`}
     >
       <svg
-        viewBox="0 0 900 920"
+        viewBox="0 0 960 980"
         className="block h-auto w-full select-none"
         role="img"
-        aria-label="Plano de unidades académicas del Instituto Tecnológico de Durango"
+        aria-label="Plano detallado de unidades académicas del Instituto Tecnológico de Durango"
       >
-        <rect x="0" y="0" width="900" height="52" fill="#5D162F" />
+        <defs>
+          <pattern
+            id="pavingGrid"
+            width="6"
+            height="6"
+            patternUnits="userSpaceOnUse"
+          >
+            <path
+              d="M 6 0 L 0 0 0 6"
+              fill="none"
+              stroke="#DC2626"
+              strokeWidth="0.35"
+              strokeOpacity="0.28"
+            />
+          </pattern>
+          <pattern
+            id="parkingStripeV"
+            width="10"
+            height="5"
+            patternUnits="userSpaceOnUse"
+          >
+            <rect width="8" height="3.2" fill="#EA580C" />
+          </pattern>
+          <pattern
+            id="parkingStripeH"
+            width="5"
+            height="10"
+            patternUnits="userSpaceOnUse"
+          >
+            <rect width="3.2" height="8" fill="#EA580C" />
+          </pattern>
+        </defs>
+
+        {/* Top Banner */}
+        <rect x="0" y="0" width="960" height="50" fill="#5D162F" />
         <text
-          x="450"
-          y="34"
+          x="480"
+          y="33"
           textAnchor="middle"
           fill="#FFFFFF"
           fontSize="24"
@@ -1004,551 +1038,849 @@ function ItdPlanoFallback({zoomed = false}: {zoomed?: boolean}) {
           INSTITUTO TECNOLÓGICO DE DURANGO
         </text>
 
-        <rect x="0" y="52" width="900" height="816" fill="#FFFFFF" />
+        {/* Main White Canvas */}
+        <rect x="0" y="50" width="960" height="880" fill="#FFFFFF" />
 
+        {/* ==================== UNIDAD NORTE ==================== */}
+        {/* Av. Jesús García & Top Bays */}
+        <path
+          d="M 145 78 L 145 96 L 265 96 L 265 78 M 275 78 L 275 96 L 405 96 L 405 78 M 415 78 L 415 96 L 545 96 L 545 78 M 555 78 L 555 96 L 835 96 L 835 78"
+          fill="none"
+          stroke="#1E293B"
+          strokeWidth="1.8"
+        />
         <text
-          x="335"
-          y="108"
+          x="365"
+          y="120"
           textAnchor="middle"
-          fill="#1E293B"
+          fill="#0F172A"
           fontSize="11"
           fontWeight="700"
         >
           AV. JESÚS GARCÍA
         </text>
+        <text x="688" y="128" fill="#334155" fontSize="6.5" fontWeight="700">
+          ACCESO
+        </text>
+        <text x="765" y="131" fill="#334155" fontSize="6.5" fontWeight="700">
+          SALIDA
+        </text>
 
+        {/* Unidad Norte Outer Boundary */}
         <path
-          d="M 110 120 L 820 120 L 820 400 L 185 400 L 160 310 L 110 140 Z"
-          fill="#F8FAFC"
-          stroke="#1E293B"
-          strokeWidth="2.5"
+          d="M 122 135 L 866 135 L 866 418 L 210 416 Q 192 385 182 340 L 122 135 Z"
+          fill="#FFFFFF"
+          stroke="#0F172A"
+          strokeWidth="2.4"
         />
 
+        {/* Blvd. Tecnológico road line */}
+        <path
+          d="M 102 135 L 178 398 Q 186 418 212 420"
+          fill="none"
+          stroke="#0F172A"
+          strokeWidth="2"
+        />
         <text
-          x="130"
-          y="225"
-          fill="#1E293B"
-          fontSize="10"
+          x="136"
+          y="235"
+          fill="#0F172A"
+          fontSize="9.5"
           fontWeight="700"
-          transform="rotate(71 130 225)"
+          transform="rotate(73 136 235)"
         >
           BLVD. TECNOLÓGICO
         </text>
 
+        {/* Internal Ring Road (Unidad Norte) */}
         <path
-          d="M 330 125 A 160 125 0 0 0 490 250 L 330 250 Z"
-          fill="#FFFFFF"
-          stroke="#94A3B8"
-          strokeWidth="1.5"
+          d="M 185 322 L 260 282 L 568 282 Q 596 282 596 254 L 596 135"
+          fill="none"
+          stroke="#0F172A"
+          strokeWidth="1.8"
         />
-        <text x="395" y="192" fill="#334155" fontSize="10" fontWeight="600">
+        <path
+          d="M 192 338 L 266 300 L 580 300 Q 614 300 614 260 L 614 135"
+          fill="none"
+          stroke="#0F172A"
+          strokeWidth="1.8"
+        />
+
+        {/* North-West Field: m, i, Campo de Beisbol */}
+        <rect
+          x="232"
+          y="178"
+          width="66"
+          height="32"
+          fill="#FFFFFF"
+          stroke="#64748B"
+          strokeWidth="1.8"
+        />
+        <text x="265" y="198" textAnchor="middle" fill="#334155" fontSize="10" fontWeight="600">
+          m
+        </text>
+
+        <g transform="translate(178, 224) rotate(24)">
+          <rect
+            x="-6"
+            y="-6"
+            width="86"
+            height="36"
+            fill="#16A34A"
+            fillOpacity="0.14"
+            stroke="#86EFAC"
+            strokeWidth="1"
+          />
+          <polygon
+            points="0,6 22,6 32,0 52,0 74,10 74,22 48,22 38,16 20,22 0,22"
+            fill="#FFFFFF"
+            stroke="#475569"
+            strokeWidth="1.4"
+          />
+          <text x="37" y="15" textAnchor="middle" fill="#334155" fontSize="9.5" fontWeight="600">
+            i
+          </text>
+        </g>
+
+        {/* Trees North-West */}
+        <circle cx="152" cy="175" r="7" fill="#16A34A" />
+        <circle cx="164" cy="170" r="6" fill="#16A34A" />
+        <circle cx="156" cy="186" r="6" fill="#16A34A" />
+        <circle cx="168" cy="232" r="7" fill="#16A34A" />
+        <circle cx="176" cy="242" r="6" fill="#16A34A" />
+
+        {/* Campo de Beisbol */}
+        <path
+          d="M 358 278 Q 465 268 475 137"
+          fill="none"
+          stroke="#94A3B8"
+          strokeWidth="1.6"
+        />
+        <text x="394" y="216" fill="#0F172A" fontSize="9" fontWeight="700">
           Campo de Beisbol
         </text>
 
+        {/* Parking South-West (Unidad Norte) */}
         <rect
-          x="185"
-          y="310"
-          width="115"
-          height="82"
+          x="196"
+          y="338"
+          width="116"
+          height="74"
           rx="4"
-          fill="#FEF2F2"
-          stroke="#EA580C"
-          strokeWidth="1.2"
+          fill="#FFF7ED"
+          stroke="#CBD5E1"
+          strokeWidth="1"
         />
-        <text
-          x="242"
-          y="355"
-          textAnchor="middle"
-          fill="#9A3412"
-          fontSize="10"
-          fontWeight="600"
-        >
-          Estacionamiento
-        </text>
+        {[206, 222, 238, 254, 270, 286, 300].map((px) => (
+          <rect
+            key={px}
+            x={px}
+            y="344"
+            width="9"
+            height="56"
+            fill="url(#parkingStripeV)"
+          />
+        ))}
+        <rect x="234" y="404" width="66" height="6" fill="url(#parkingStripeH)" />
 
+        {/* Courtyard & Building h */}
         <rect
-          x="320"
-          y="305"
-          width="55"
-          height="65"
+          x="318"
+          y="304"
+          width="102"
+          height="92"
+          fill="url(#pavingGrid)"
+          stroke="#CBD5E1"
+          strokeWidth="0.8"
+        />
+        <rect x="318" y="304" width="22" height="58" fill="#16A34A" fillOpacity="0.24" />
+        <path
+          d="M 342 308 L 386 308 L 386 322 L 396 322 L 396 364 L 386 364 L 386 376 L 342 362 Z"
           fill="#FFFFFF"
           stroke="#475569"
-          strokeWidth="1.5"
+          strokeWidth="1.6"
         />
-        <text x="347" y="342" textAnchor="middle" fill="#475569" fontSize="11">
+        <text x="366" y="344" textAnchor="middle" fill="#334155" fontSize="11" fontWeight="700">
           h
         </text>
 
-        <path
-          d="M 645 220 L 735 220 L 770 395 L 605 395 Z"
-          fill="#22C55E"
-          fillOpacity="0.28"
-          stroke="#16A34A"
-          strokeWidth="1"
+        {/* Trees along Blvd. Felipe Pescador (Unidad Norte) */}
+        {[428, 444, 460, 476, 492, 510, 526, 542, 558, 574].map((tx, idx) => (
+          <circle
+            key={tx}
+            cx={tx}
+            cy={idx % 2 === 0 ? 396 : 390}
+            r="6.5"
+            fill="#16A34A"
+          />
+        ))}
+
+        {/* Paved Plaza around EE / UTD / Industrial / MM */}
+        <rect
+          x="588"
+          y="246"
+          width="84"
+          height="138"
+          fill="url(#pavingGrid)"
         />
 
+        {/* SC Building */}
         <rect
-          x="505"
-          y="150"
-          width="68"
+          x="508"
+          y="164"
+          width="70"
           height="32"
           fill="#FFFFFF"
-          stroke="#1E293B"
+          stroke="#475569"
           strokeWidth="1.8"
         />
-        <text
-          x="539"
-          y="164"
-          textAnchor="middle"
-          fill="#0F172A"
-          fontSize="7.5"
-          fontWeight="700"
-        >
+        <text x="543" y="177" textAnchor="middle" fill="#0F172A" fontSize="7.2" fontWeight="700">
           SISTEMAS Y
         </text>
-        <text
-          x="539"
-          y="173"
-          textAnchor="middle"
-          fill="#0F172A"
-          fontSize="7.5"
-          fontWeight="700"
-        >
+        <text x="543" y="185" textAnchor="middle" fill="#0F172A" fontSize="7.2" fontWeight="700">
           COMPUTACIÓN
         </text>
-        <text
-          x="539"
-          y="180"
-          textAnchor="middle"
-          fill="#475569"
-          fontSize="7"
-          fontWeight="600"
-        >
+        <text x="543" y="193" textAnchor="middle" fill="#334155" fontSize="7" fontWeight="700">
           aulas SC
         </text>
 
+        {/* QB Building */}
         <rect
-          x="485"
-          y="198"
-          width="68"
-          height="34"
+          x="492"
+          y="214"
+          width="70"
+          height="32"
           fill="#FFFFFF"
-          stroke="#1E293B"
+          stroke="#475569"
           strokeWidth="1.8"
         />
-        <text
-          x="519"
-          y="211"
-          textAnchor="middle"
-          fill="#0F172A"
-          fontSize="7.5"
-          fontWeight="700"
-        >
+        <text x="527" y="227" textAnchor="middle" fill="#0F172A" fontSize="7.2" fontWeight="700">
           QUÍMICA Y
         </text>
-        <text
-          x="519"
-          y="220"
-          textAnchor="middle"
-          fill="#0F172A"
-          fontSize="7.5"
-          fontWeight="700"
-        >
+        <text x="527" y="235" textAnchor="middle" fill="#0F172A" fontSize="7.2" fontWeight="700">
           BIOQUÍMICA
         </text>
-        <text
-          x="519"
-          y="229"
-          textAnchor="middle"
-          fill="#475569"
-          fontSize="7"
-          fontWeight="600"
-        >
+        <text x="527" y="243" textAnchor="middle" fill="#334155" fontSize="7" fontWeight="700">
           aulas QB
         </text>
 
+        {/* EE + Domo + UTD + Industrial + MM */}
         <rect
-          x="592"
-          y="135"
+          x="618"
+          y="148"
           width="62"
-          height="42"
+          height="34"
           fill="#FFFFFF"
-          stroke="#1E293B"
+          stroke="#475569"
           strokeWidth="1.8"
         />
-        <text
-          x="623"
-          y="150"
-          textAnchor="middle"
-          fill="#0F172A"
-          fontSize="8"
-          fontWeight="700"
-        >
+        <text x="649" y="160" textAnchor="middle" fill="#0F172A" fontSize="7.5" fontWeight="700">
           ELÉCTRICA Y
         </text>
-        <text
-          x="623"
-          y="160"
-          textAnchor="middle"
-          fill="#0F172A"
-          fontSize="8"
-          fontWeight="700"
-        >
+        <text x="649" y="169" textAnchor="middle" fill="#0F172A" fontSize="7.5" fontWeight="700">
           ELECTRÓNICA
         </text>
-        <text
-          x="623"
-          y="171"
-          textAnchor="middle"
-          fill="#475569"
-          fontSize="7.5"
-          fontWeight="700"
-        >
+        <text x="649" y="178" textAnchor="middle" fill="#334155" fontSize="7" fontWeight="700">
           aulas EE 1-14
         </text>
 
         <rect
-          x="595"
-          y="180"
-          width="56"
-          height="32"
+          x="618"
+          y="182"
+          width="62"
+          height="36"
           fill="#64748B"
           stroke="#334155"
           strokeWidth="1.2"
         />
-        <text
-          x="623"
-          y="200"
-          textAnchor="middle"
-          fill="#FFFFFF"
-          fontSize="9"
-          fontWeight="700"
-        >
+        <text x="649" y="204" textAnchor="middle" fill="#FFFFFF" fontSize="9" fontWeight="700">
           Domo
         </text>
 
         <rect
-          x="592"
-          y="214"
+          x="618"
+          y="218"
           width="62"
           height="30"
           fill="#FFFFFF"
-          stroke="#1E293B"
+          stroke="#475569"
           strokeWidth="1.8"
         />
-        <text
-          x="623"
-          y="227"
-          textAnchor="middle"
-          fill="#0F172A"
-          fontSize="8"
-          fontWeight="700"
-        >
+        <text x="649" y="231" textAnchor="middle" fill="#0F172A" fontSize="7.8" fontWeight="700">
           DISTANCIA
         </text>
-        <text
-          x="623"
-          y="238"
-          textAnchor="middle"
-          fill="#475569"
-          fontSize="7.5"
-          fontWeight="700"
-        >
+        <text x="649" y="242" textAnchor="middle" fill="#334155" fontSize="7" fontWeight="700">
           aulas UTD 1-9
         </text>
 
         <rect
-          x="592"
-          y="272"
+          x="618"
+          y="286"
           width="62"
           height="32"
           fill="#FFFFFF"
-          stroke="#1E293B"
+          stroke="#475569"
           strokeWidth="1.8"
         />
-        <text
-          x="623"
-          y="286"
-          textAnchor="middle"
-          fill="#0F172A"
-          fontSize="8"
-          fontWeight="700"
-        >
+        <text x="649" y="300" textAnchor="middle" fill="#0F172A" fontSize="7.8" fontWeight="700">
           INDUSTRIAL
         </text>
-        <text
-          x="623"
-          y="297"
-          textAnchor="middle"
-          fill="#475569"
-          fontSize="7.5"
-          fontWeight="700"
-        >
+        <text x="649" y="311" textAnchor="middle" fill="#334155" fontSize="7" fontWeight="700">
           aulas I 1-12
         </text>
 
         <rect
-          x="554"
-          y="324"
-          width="66"
+          x="582"
+          y="344"
+          width="68"
           height="34"
           fill="#FFFFFF"
-          stroke="#1E293B"
+          stroke="#475569"
           strokeWidth="1.8"
         />
-        <text
-          x="587"
-          y="336"
-          textAnchor="middle"
-          fill="#0F172A"
-          fontSize="7.5"
-          fontWeight="700"
-        >
+        <text x="616" y="356" textAnchor="middle" fill="#0F172A" fontSize="7.2" fontWeight="700">
           MECÁNICA Y
         </text>
-        <text
-          x="587"
-          y="345"
-          textAnchor="middle"
-          fill="#0F172A"
-          fontSize="7.5"
-          fontWeight="700"
-        >
+        <text x="616" y="365" textAnchor="middle" fill="#0F172A" fontSize="7.2" fontWeight="700">
           MECATRÓNICA
         </text>
-        <text
-          x="587"
-          y="354"
-          textAnchor="middle"
-          fill="#475569"
-          fontSize="7"
-          fontWeight="700"
-        >
+        <text x="616" y="374" textAnchor="middle" fill="#334155" fontSize="7" fontWeight="700">
           aulas MM
         </text>
 
+        {/* East Sector Unidad Norte: Gardens, Walkways, e, c, k, b, d, a & Parking */}
+        {/* Parking East of Domo / UTD */}
+        <rect x="688" y="152" width="76" height="12" fill="url(#parkingStripeH)" />
+        <rect x="688" y="176" width="76" height="10" fill="url(#parkingStripeH)" />
+        <rect x="782" y="192" width="12" height="44" fill="url(#parkingStripeV)" />
+        <rect x="854" y="150" width="8" height="205" fill="url(#parkingStripeV)" />
+
+        {/* Building e */}
+        <rect
+          x="708"
+          y="196"
+          width="54"
+          height="38"
+          fill="#FFFFFF"
+          stroke="#475569"
+          strokeWidth="1.6"
+        />
+        <text x="735" y="219" textAnchor="middle" fill="#334155" fontSize="10" fontWeight="600">
+          e
+        </text>
+
+        {/* Court / Building c (right side) */}
+        <rect
+          x="814"
+          y="174"
+          width="32"
+          height="62"
+          rx="12"
+          fill="#FFFFFF"
+          stroke="#64748B"
+          strokeWidth="1.4"
+        />
+        <rect
+          x="819"
+          y="182"
+          width="22"
+          height="46"
+          fill="none"
+          stroke="#94A3B8"
+          strokeWidth="1"
+        />
+        <circle cx="830" cy="205" r="5" fill="none" stroke="#94A3B8" strokeWidth="1" />
+        <text x="830" y="208" textAnchor="middle" fill="#334155" fontSize="9" fontWeight="600">
+          c
+        </text>
+
+        {/* Green Garden Islands & Tan Walkways (South-East Unidad Norte) */}
+        <path
+          d="M 652 380 Q 690 340 735 330 Q 795 315 848 395 L 652 414 Z"
+          fill="url(#pavingGrid)"
+        />
+        <path
+          d="M 686 254 Q 730 245 752 268 Q 760 296 726 306 Q 692 308 686 278 Z"
+          fill="#16A34A"
+        />
+        <path
+          d="M 744 276 Q 778 272 794 298 Q 798 326 764 334 Q 732 328 744 276 Z"
+          fill="#16A34A"
+        />
+        <path
+          d="M 758 340 Q 792 332 802 362 Q 798 396 758 394 Q 740 374 758 340 Z"
+          fill="#16A34A"
+        />
+        <path
+          d="M 672 356 Q 704 348 724 374 Q 726 404 686 406 Q 658 392 672 356 Z"
+          fill="#16A34A"
+        />
+
+        {/* Building d (diamond inside garden) */}
+        <g transform="translate(712, 326) rotate(42)">
+          <rect
+            x="-15"
+            y="-14"
+            width="30"
+            height="28"
+            fill="#FFFFFF"
+            stroke="#475569"
+            strokeWidth="1.5"
+          />
+          <text
+            x="0"
+            y="4"
+            textAnchor="middle"
+            fill="#334155"
+            fontSize="9"
+            fontWeight="600"
+            transform="rotate(-42)"
+          >
+            d
+          </text>
+        </g>
+
+        {/* Building k, b, a */}
+        <polygon
+          points="772,248 794,244 800,268 776,272"
+          fill="#FFFFFF"
+          stroke="#475569"
+          strokeWidth="1.4"
+        />
+        <text x="786" y="261" textAnchor="middle" fill="#334155" fontSize="9" fontWeight="600">
+          k
+        </text>
+
+        <g transform="translate(808, 294) rotate(-38)">
+          <rect
+            x="-18"
+            y="-13"
+            width="36"
+            height="26"
+            fill="#FFFFFF"
+            stroke="#475569"
+            strokeWidth="1.5"
+          />
+          <text
+            x="0"
+            y="4"
+            textAnchor="middle"
+            fill="#334155"
+            fontSize="9"
+            fontWeight="600"
+            transform="rotate(38)"
+          >
+            b
+          </text>
+        </g>
+
+        <g transform="translate(838, 372) rotate(-35)">
+          <rect
+            x="-15"
+            y="-12"
+            width="30"
+            height="24"
+            fill="#FFFFFF"
+            stroke="#475569"
+            strokeWidth="1.5"
+          />
+          <text
+            x="0"
+            y="4"
+            textAnchor="middle"
+            fill="#334155"
+            fontSize="9"
+            fontWeight="600"
+            transform="rotate(35)"
+          >
+            a
+          </text>
+        </g>
+
+        {/* CFE label */}
         <text
-          x="834"
-          y="265"
+          x="878"
+          y="272"
           textAnchor="middle"
-          fill="#475569"
+          fill="#334155"
           fontSize="8.5"
           fontWeight="600"
-          transform="rotate(-90 834 265)"
+          transform="rotate(-90 878 272)"
         >
           COMISIÓN FEDERAL DE ELECTRICIDAD
         </text>
 
-        <line x1="478" y1="125" x2="515" y2="156" stroke="#5D162F" strokeWidth="4" />
-        <circle cx="472" cy="116" r="22" fill="#5D162F" />
-        <text x="472" y="123" textAnchor="middle" fill="#FFFFFF" fontSize="16" fontWeight="700">
+        {/* Unidad Norte Callout Pins */}
+        <line x1="484" y1="126" x2="522" y2="168" stroke="#5D162F" strokeWidth="4.5" />
+        <circle cx="478" cy="116" r="22" fill="#5D162F" />
+        <text x="478" y="123" textAnchor="middle" fill="#FFFFFF" fontSize="16" fontWeight="700">
           SC
         </text>
 
-        <line x1="468" y1="192" x2="495" y2="208" stroke="#5D162F" strokeWidth="4" />
-        <circle cx="460" cy="188" r="21" fill="#5D162F" />
-        <text x="460" y="195" textAnchor="middle" fill="#FFFFFF" fontSize="16" fontWeight="700">
+        <line x1="472" y1="200" x2="500" y2="220" stroke="#5D162F" strokeWidth="4.5" />
+        <circle cx="464" cy="196" r="22" fill="#5D162F" />
+        <text x="464" y="203" textAnchor="middle" fill="#FFFFFF" fontSize="16" fontWeight="700">
           QB
         </text>
 
-        <line x1="572" y1="108" x2="604" y2="144" stroke="#5D162F" strokeWidth="4" />
-        <circle cx="566" cy="100" r="22" fill="#5D162F" />
-        <text x="566" y="107" textAnchor="middle" fill="#FFFFFF" fontSize="16" fontWeight="700">
+        <line x1="598" y1="112" x2="634" y2="152" stroke="#5D162F" strokeWidth="4.5" />
+        <circle cx="592" cy="102" r="22" fill="#5D162F" />
+        <text x="592" y="109" textAnchor="middle" fill="#FFFFFF" fontSize="16" fontWeight="700">
           EE
         </text>
 
-        <line x1="692" y1="122" x2="646" y2="224" stroke="#5D162F" strokeWidth="4" />
-        <circle cx="702" cy="106" r="23" fill="#5D162F" />
-        <text x="702" y="112" textAnchor="middle" fill="#FFFFFF" fontSize="14" fontWeight="700">
+        <line x1="728" y1="118" x2="676" y2="230" stroke="#5D162F" strokeWidth="4.5" />
+        <circle cx="734" cy="104" r="22" fill="#5D162F" />
+        <text x="734" y="110" textAnchor="middle" fill="#FFFFFF" fontSize="14" fontWeight="700">
           UTD
         </text>
 
-        <line x1="848" y1="288" x2="648" y2="288" stroke="#5D162F" strokeWidth="4" />
-        <circle cx="862" cy="288" r="22" fill="#5D162F" />
-        <text x="862" y="295" textAnchor="middle" fill="#FFFFFF" fontSize="18" fontWeight="700">
+        <line x1="896" y1="302" x2="674" y2="302" stroke="#5D162F" strokeWidth="4.5" />
+        <circle cx="912" cy="302" r="22" fill="#5D162F" />
+        <text x="912" y="309" textAnchor="middle" fill="#FFFFFF" fontSize="18" fontWeight="700">
           I
         </text>
 
-        <line x1="848" y1="382" x2="618" y2="342" stroke="#5D162F" strokeWidth="4" />
-        <circle cx="864" cy="385" r="22" fill="#5D162F" />
-        <text x="864" y="391" textAnchor="middle" fill="#FFFFFF" fontSize="15" fontWeight="700">
+        <line x1="896" y1="396" x2="646" y2="360" stroke="#5D162F" strokeWidth="4.5" />
+        <circle cx="912" cy="400" r="22" fill="#5D162F" />
+        <text x="912" y="406" textAnchor="middle" fill="#FFFFFF" fontSize="15" fontWeight="700">
           MM
         </text>
 
-        <g transform="translate(88, 365)">
-          <text x="0" y="-62" textAnchor="middle" fill="#475569" fontSize="9.5" fontWeight="600">
+        {/* Compass Rose (Norte) */}
+        <g transform="translate(88, 360)">
+          <text x="0" y="-58" textAnchor="middle" fill="#475569" fontSize="9.5" fontWeight="600">
             LIVERPOOL
           </text>
-          <circle cx="0" cy="0" r="34" fill="none" stroke="#1E293B" strokeWidth="1.5" />
-          <line x1="0" y1="-48" x2="0" y2="92" stroke="#1E293B" strokeWidth="1.5" />
-          <line x1="-44" y1="0" x2="44" y2="0" stroke="#1E293B" strokeWidth="1.5" />
-          <path d="M -34 0 L 0 -36 L 34 0" fill="none" stroke="#1E293B" strokeWidth="1.5" />
-          <text x="10" y="56" fill="#1E293B" fontSize="22" fontWeight="500">
+          <circle cx="0" cy="0" r="32" fill="none" stroke="#1E293B" strokeWidth="1.5" />
+          <line x1="0" y1="-44" x2="0" y2="86" stroke="#1E293B" strokeWidth="1.5" />
+          <line x1="-42" y1="0" x2="42" y2="0" stroke="#1E293B" strokeWidth="1.5" />
+          <path d="M -32 0 L 0 -34 L 32 0" fill="none" stroke="#1E293B" strokeWidth="1.5" />
+          <text x="9" y="54" fill="#1E293B" fontSize="20" fontWeight="500">
             norte
           </text>
         </g>
 
-        <line x1="190" y1="406" x2="760" y2="412" stroke="#0F172A" strokeWidth="2.5" />
-        <line x1="210" y1="422" x2="755" y2="428" stroke="#0F172A" strokeWidth="2.5" />
-        <text x="518" y="418" textAnchor="middle" fill="#0F172A" fontSize="10" fontWeight="700">
+        {/* ==================== BLVD. FELIPE PESCADOR ==================== */}
+        <line x1="198" y1="424" x2="808" y2="430" stroke="#0F172A" strokeWidth="2.4" />
+        <line x1="214" y1="440" x2="804" y2="446" stroke="#0F172A" strokeWidth="2.4" />
+        <text x="536" y="436" textAnchor="middle" fill="#0F172A" fontSize="10" fontWeight="700">
           BLVD. FELIPE PESCADOR
         </text>
 
+        {/* ==================== UNIDAD SUR ==================== */}
+        {/* Outer Boundary Unidad Sur */}
         <path
-          d="M 215 432 L 758 432 L 758 552 L 668 575 L 705 702 L 420 822 L 215 432 Z"
-          fill="#F8FAFC"
-          stroke="#1E293B"
-          strokeWidth="2.5"
+          d="M 222 452 L 802 452 L 814 584 L 722 606 L 758 754 L 464 888 L 222 452 Z"
+          fill="#FFFFFF"
+          stroke="#0F172A"
+          strokeWidth="2.4"
         />
 
-        <path d="M 326 440 L 368 440 L 468 785 L 425 804 Z" fill="#16A34A" fillOpacity="0.28" />
+        {/* West Internal Green Strip & Central Avenue */}
+        <polygon
+          points="330,456 382,456 508,856 456,878"
+          fill="#16A34A"
+          fillOpacity="0.9"
+        />
+        {/* Internal North-South Road separating Aulas U/H/G/W/V/X/R/Q/K from I/J/Estadio */}
+        <line x1="286" y1="454" x2="438" y2="878" stroke="#0F172A" strokeWidth="1.8" />
+        <line x1="296" y1="454" x2="448" y2="872" stroke="#0F172A" strokeWidth="1.8" />
 
-        <g transform="translate(475, 588) rotate(-21)">
-          <rect x="-62" y="-102" width="124" height="204" rx="62" fill="#991B1B" stroke="#475569" strokeWidth="2" />
-          <rect x="-42" y="-78" width="84" height="156" rx="14" fill="#16A34A" />
-          <text x="0" y="4" textAnchor="middle" fill="#FFFFFF" fontSize="10" fontWeight="700">
-            ESTADIO
-          </text>
-        </g>
+        {/* Green Zone West of Internal Road (W, V, Y, X, B, R, Q, K, C) */}
+        <polygon
+          points="300,536 336,536 446,858 412,870"
+          fill="#16A34A"
+          fillOpacity="0.88"
+        />
 
-        <g transform="translate(275, 514) rotate(-22)">
-          <rect x="0" y="0" width="44" height="16" fill="#FFFFFF" stroke="#0284C7" strokeWidth="1.5" />
-          <text x="22" y="11" textAnchor="middle" fill="#0F172A" fontSize="7" fontWeight="700">
+        {/* Top-West Aulas U 1-4 & H 1-3 */}
+        <g transform="translate(268, 520) rotate(-22)">
+          <rect x="0" y="0" width="46" height="17" fill="#FFFFFF" stroke="#0284C7" strokeWidth="1.6" />
+          <text x="23" y="11" textAnchor="middle" fill="#0F172A" fontSize="6.8" fontWeight="700">
             aulas U 1-4
           </text>
         </g>
-        <g transform="translate(288, 538) rotate(-22)">
-          <rect x="0" y="0" width="44" height="15" fill="#FFFFFF" stroke="#1E293B" strokeWidth="1.3" />
-          <text x="22" y="10" textAnchor="middle" fill="#0F172A" fontSize="7" fontWeight="700">
+        <g transform="translate(280, 544) rotate(-22)">
+          <rect x="0" y="0" width="46" height="16" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.4" />
+          <text x="23" y="10" textAnchor="middle" fill="#0F172A" fontSize="6.8" fontWeight="700">
             aulas H 1-3
           </text>
         </g>
 
-        <rect x="592" y="468" width="54" height="58" fill="#FFFFFF" stroke="#64748B" strokeWidth="1.2" />
-        <text x="619" y="500" textAnchor="middle" fill="#475569" fontSize="8.5" fontWeight="600">
-          CANCHAS
-        </text>
-        <rect x="674" y="456" width="74" height="90" rx="4" fill="#FEF2F2" stroke="#EA580C" strokeWidth="1.2" />
+        {/* West Corridor Buildings: G, W, V, Y, X, B2, B1, B, R, Q, K, C */}
+        <g transform="translate(286, 566) rotate(-22)">
+          <rect x="0" y="0" width="32" height="32" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.5" />
+          <text x="16" y="19" textAnchor="middle" fill="#0F172A" fontSize="9" fontWeight="700">G</text>
+        </g>
+        <g transform="translate(322, 598) rotate(-22)">
+          <rect x="0" y="0" width="34" height="16" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.4" />
+          <text x="17" y="11" textAnchor="middle" fill="#0F172A" fontSize="8" fontWeight="700">W</text>
+        </g>
+        <g transform="translate(316, 628) rotate(-22)">
+          <rect x="0" y="0" width="28" height="30" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.5" />
+          <text x="14" y="18" textAnchor="middle" fill="#0F172A" fontSize="8.5" fontWeight="700">V</text>
+        </g>
+        <g transform="translate(352, 616) rotate(-22)">
+          <rect x="0" y="0" width="26" height="28" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.5" />
+          <text x="13" y="17" textAnchor="middle" fill="#0F172A" fontSize="8.5" fontWeight="700">Y</text>
+        </g>
+        <g transform="translate(334, 672) rotate(-22)">
+          <rect x="0" y="0" width="34" height="44" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.5" />
+          <text x="17" y="25" textAnchor="middle" fill="#0F172A" fontSize="9" fontWeight="700">X</text>
+        </g>
+        <g transform="translate(374, 662) rotate(-22)">
+          <rect x="0" y="0" width="26" height="28" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.4" />
+          <text x="13" y="17" textAnchor="middle" fill="#0F172A" fontSize="7.5" fontWeight="700">B2</text>
+        </g>
+        <g transform="translate(388, 694) rotate(-22)">
+          <rect x="0" y="0" width="24" height="18" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.4" />
+          <text x="12" y="12" textAnchor="middle" fill="#0F172A" fontSize="7.5" fontWeight="700">B1</text>
+        </g>
+        <g transform="translate(396, 718) rotate(-22)">
+          <rect x="0" y="0" width="34" height="52" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.5" />
+          <text x="17" y="29" textAnchor="middle" fill="#0F172A" fontSize="9.5" fontWeight="700">B</text>
+        </g>
+        <g transform="translate(362, 742) rotate(-22)">
+          <rect x="0" y="0" width="24" height="20" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.4" />
+          <text x="12" y="13" textAnchor="middle" fill="#0F172A" fontSize="8" fontWeight="700">R</text>
+        </g>
+        <g transform="translate(370, 770) rotate(-22)">
+          <rect x="0" y="0" width="28" height="30" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.4" />
+          <text x="14" y="18" textAnchor="middle" fill="#0F172A" fontSize="8.5" fontWeight="700">Q</text>
+        </g>
+        <g transform="translate(384, 808) rotate(-22)">
+          <rect x="0" y="0" width="28" height="22" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.4" />
+          <text x="14" y="14" textAnchor="middle" fill="#0F172A" fontSize="8" fontWeight="700">K</text>
+        </g>
+        <g transform="translate(420, 796) rotate(-22)">
+          <rect x="0" y="0" width="28" height="16" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.4" />
+          <text x="14" y="11" textAnchor="middle" fill="#0F172A" fontSize="8" fontWeight="700">C</text>
+        </g>
 
-        <g transform="translate(558, 636) rotate(-22)">
-          <rect x="0" y="0" width="92" height="24" fill="#FFFFFF" stroke="#1E293B" strokeWidth="1.5" />
-          <text x="46" y="15" textAnchor="middle" fill="#334155" fontSize="9" fontWeight="700">
-            E
+        {/* Central-North Buildings: I, J1, J, P */}
+        <g transform="translate(342, 478) rotate(-22)">
+          <rect x="0" y="0" width="34" height="28" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.5" />
+          <text x="17" y="17" textAnchor="middle" fill="#0F172A" fontSize="9" fontWeight="700">I</text>
+        </g>
+        <g transform="translate(378, 464) rotate(-22)">
+          <rect x="0" y="0" width="16" height="14" fill="#FFFFFF" stroke="#0284C7" strokeWidth="1.4" />
+          <text x="8" y="10" textAnchor="middle" fill="#0F172A" fontSize="6.5" fontWeight="700">J1</text>
+        </g>
+        <g transform="translate(358, 514) rotate(-22)">
+          <rect x="0" y="0" width="36" height="26" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.5" />
+          <text x="18" y="16" textAnchor="middle" fill="#0F172A" fontSize="9" fontWeight="700">J</text>
+        </g>
+        <g transform="translate(390, 488) rotate(-22)">
+          <rect x="0" y="0" width="14" height="36" fill="#FFFFFF" stroke="#64748B" strokeWidth="1.3" />
+          <text x="7" y="21" textAnchor="middle" fill="#334155" fontSize="7.5" fontWeight="700">P</text>
+        </g>
+
+        {/* Volleyball & Fronton courts north of Estadio */}
+        <g transform="translate(412, 474) rotate(-20)">
+          <rect x="0" y="0" width="46" height="26" fill="#FFFFFF" stroke="#64748B" strokeWidth="1.2" />
+          <text x="23" y="15" textAnchor="middle" fill="#475569" fontSize="4.8" fontWeight="600">
+            VOLEIBOL PLAYA
+          </text>
+        </g>
+        <g transform="translate(486, 458) rotate(-20)">
+          <rect x="0" y="0" width="40" height="18" fill="#FFFFFF" stroke="#64748B" strokeWidth="1.2" />
+          <text x="20" y="11" textAnchor="middle" fill="#475569" fontSize="5.2" fontWeight="600">
+            FRONTÓN
           </text>
         </g>
 
-        <g transform="translate(572, 672) rotate(-22)">
-          <rect x="0" y="0" width="86" height="22" fill="#FFFFFF" stroke="#0284C7" strokeWidth="1.8" />
-          <text x="43" y="14" textAnchor="middle" fill="#0F172A" fontSize="8.5" fontWeight="700">
+        {/* ESTADIO & Track */}
+        <g transform="translate(502, 622) rotate(-21)">
+          <rect
+            x="-64"
+            y="-108"
+            width="128"
+            height="216"
+            rx="64"
+            fill="#991B1B"
+            stroke="#475569"
+            strokeWidth="2"
+          />
+          <rect x="-42" y="-82" width="84" height="164" rx="14" fill="#16A34A" />
+          <text x="0" y="4" textAnchor="middle" fill="#FFFFFF" fontSize="10.5" fontWeight="700">
+            ESTADIO
+          </text>
+        </g>
+
+        {/* Green strip east of Estadio + N & Z */}
+        <polygon points="520,492 544,484 606,660 582,668" fill="#16A34A" />
+        <g transform="translate(550, 524) rotate(-21)">
+          <rect x="0" y="0" width="24" height="94" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.6" />
+          <text x="12" y="51" textAnchor="middle" fill="#0F172A" fontSize="9.5" fontWeight="700">N</text>
+        </g>
+        <g transform="translate(592, 616) rotate(-21)">
+          <rect x="0" y="0" width="24" height="24" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.5" />
+          <text x="12" y="15" textAnchor="middle" fill="#0F172A" fontSize="9" fontWeight="700">Z</text>
+        </g>
+
+        {/* L, CANCHAS & Estacionamiento Oriente */}
+        <g transform="translate(566, 480) rotate(-21)">
+          <rect x="0" y="0" width="58" height="38" fill="#FFFFFF" stroke="#64748B" strokeWidth="1.4" />
+          <text x="29" y="23" textAnchor="middle" fill="#334155" fontSize="9.5" fontWeight="700">L</text>
+        </g>
+        <g transform="translate(612, 502) rotate(-21)">
+          <rect x="0" y="0" width="54" height="72" fill="#FFFFFF" stroke="#64748B" strokeWidth="1.3" />
+          <text x="27" y="38" textAnchor="middle" fill="#475569" fontSize="7.5" fontWeight="700">
+            CANCHAS
+          </text>
+        </g>
+
+        {/* East Parking Lot (5 orange rows) */}
+        {[482, 498, 514, 530, 546].map((py) => (
+          <rect
+            key={py}
+            x="698"
+            y={py}
+            width="86"
+            height="9"
+            fill="url(#parkingStripeH)"
+          />
+        ))}
+
+        {/* South Academic Wing: E, M, F, O 1-10, D 1-12, S 1-8, T 1-14, A, Plaza Cívica */}
+        <g transform="translate(590, 668) rotate(-22)">
+          <rect x="0" y="0" width="96" height="28" fill="#FFFFFF" stroke="#0284C7" strokeWidth="1.6" />
+          <text x="45" y="18" textAnchor="middle" fill="#0F172A" fontSize="9.5" fontWeight="700">E</text>
+          <rect x="86" y="0" width="12" height="28" fill="#FFFFFF" stroke="#0284C7" strokeWidth="1.4" />
+          <text x="92" y="17" textAnchor="middle" fill="#0F172A" fontSize="7.5" fontWeight="700">M</text>
+        </g>
+
+        {/* Green lawn between E and O */}
+        <g transform="translate(604, 704) rotate(-22)">
+          <rect x="0" y="0" width="58" height="12" fill="#16A34A" fillOpacity="0.88" />
+          <rect x="64" y="-4" width="38" height="20" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.4" />
+          <text x="83" y="9" textAnchor="middle" fill="#0F172A" fontSize="8.5" fontWeight="700">F</text>
+        </g>
+
+        <g transform="translate(610, 718) rotate(-22)">
+          <rect x="0" y="0" width="92" height="22" fill="#FFFFFF" stroke="#0284C7" strokeWidth="1.8" />
+          <text x="46" y="14" textAnchor="middle" fill="#0F172A" fontSize="8.2" fontWeight="700">
             aulas O 1-10
           </text>
         </g>
 
-        <g transform="translate(580, 702) rotate(-22)">
-          <rect x="0" y="0" width="88" height="22" fill="#FFFFFF" stroke="#0284C7" strokeWidth="1.8" />
-          <text x="44" y="14" textAnchor="middle" fill="#0F172A" fontSize="8.5" fontWeight="700">
+        <g transform="translate(618, 748) rotate(-22)">
+          <rect x="0" y="0" width="94" height="22" fill="#FFFFFF" stroke="#0284C7" strokeWidth="1.8" />
+          <text x="47" y="14" textAnchor="middle" fill="#0F172A" fontSize="8.2" fontWeight="700">
             aulas D 1-12
           </text>
         </g>
 
-        <g transform="translate(550, 744) rotate(-22)">
-          <rect x="0" y="0" width="58" height="20" fill="#FFFFFF" stroke="#1E293B" strokeWidth="1.8" />
-          <text x="29" y="13" textAnchor="middle" fill="#0F172A" fontSize="8" fontWeight="700">
+        <g transform="translate(588, 792) rotate(-22)">
+          <rect x="0" y="0" width="60" height="20" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.8" />
+          <text x="30" y="13" textAnchor="middle" fill="#0F172A" fontSize="7.8" fontWeight="700">
             aulas S 1-8
           </text>
         </g>
-        <g transform="translate(614, 720) rotate(-22)">
-          <rect x="0" y="0" width="58" height="20" fill="#FFFFFF" stroke="#1E293B" strokeWidth="1.8" />
-          <text x="29" y="13" textAnchor="middle" fill="#0F172A" fontSize="8" fontWeight="700">
+        <g transform="translate(652, 766) rotate(-22)">
+          <rect x="0" y="0" width="62" height="20" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.8" />
+          <text x="31" y="13" textAnchor="middle" fill="#0F172A" fontSize="7.8" fontWeight="700">
             aulas T 1-14
           </text>
         </g>
 
-        <g transform="translate(466, 705) rotate(-22)">
-          <rect x="0" y="0" width="76" height="46" fill="#FFFFFF" stroke="#1E293B" strokeWidth="1.5" />
-          <text x="38" y="26" textAnchor="middle" fill="#0F172A" fontSize="8.5" fontWeight="700">
+        {/* Arquitectura (A) parallel workshops & Plaza Cívica */}
+        <g transform="translate(490, 744) rotate(-22)">
+          <rect x="0" y="0" width="84" height="50" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.6" />
+          <line x1="18" y1="0" x2="18" y2="38" stroke="#475569" strokeWidth="1.2" />
+          <line x1="36" y1="0" x2="36" y2="38" stroke="#475569" strokeWidth="1.2" />
+          <line x1="54" y1="0" x2="54" y2="38" stroke="#475569" strokeWidth="1.2" />
+          <text x="42" y="45" textAnchor="middle" fill="#0F172A" fontSize="8.5" fontWeight="700">
             Arq. (A)
           </text>
         </g>
-        <text x="484" y="788" textAnchor="middle" fill="#475569" fontSize="7.5" fontWeight="600">
+        <text x="498" y="846" textAnchor="middle" fill="#334155" fontSize="7.5" fontWeight="600">
           Plaza Cívica
         </text>
+        <text x="772" y="698" fill="#475569" fontSize="7" fontWeight="600" transform="rotate(-18 772 698)">
+          COLINDANCIA ESC. No. 1
+        </text>
 
-        <line x1="712" y1="664" x2="652" y2="658" stroke="#5D162F" strokeWidth="4" />
-        <circle cx="722" cy="666" r="21" fill="#5D162F" />
-        <text x="722" y="673" textAnchor="middle" fill="#FFFFFF" fontSize="17" fontWeight="700">
+        {/* Unidad Sur Callout Pins */}
+        <line x1="760" y1="712" x2="694" y2="704" stroke="#5D162F" strokeWidth="4.5" />
+        <circle cx="772" cy="714" r="21" fill="#5D162F" />
+        <text x="772" y="721" textAnchor="middle" fill="#FFFFFF" fontSize="17" fontWeight="700">
           O
         </text>
 
-        <line x1="704" y1="712" x2="656" y2="688" stroke="#5D162F" strokeWidth="4" />
-        <circle cx="714" cy="716" r="21" fill="#5D162F" />
-        <text x="714" y="723" textAnchor="middle" fill="#FFFFFF" fontSize="17" fontWeight="700">
+        <line x1="752" y1="762" x2="698" y2="736" stroke="#5D162F" strokeWidth="4.5" />
+        <circle cx="764" cy="766" r="21" fill="#5D162F" />
+        <text x="764" y="773" textAnchor="middle" fill="#FFFFFF" fontSize="17" fontWeight="700">
           D
         </text>
 
-        <line x1="664" y1="758" x2="646" y2="728" stroke="#5D162F" strokeWidth="4" />
-        <circle cx="670" cy="768" r="21" fill="#5D162F" />
-        <text x="670" y="775" textAnchor="middle" fill="#FFFFFF" fontSize="17" fontWeight="700">
+        <line x1="708" y1="812" x2="684" y2="776" stroke="#5D162F" strokeWidth="4.5" />
+        <circle cx="716" cy="822" r="21" fill="#5D162F" />
+        <text x="716" y="829" textAnchor="middle" fill="#FFFFFF" fontSize="17" fontWeight="700">
           T
         </text>
 
-        <line x1="606" y1="786" x2="584" y2="752" stroke="#5D162F" strokeWidth="4" />
-        <circle cx="612" cy="795" r="21" fill="#5D162F" />
-        <text x="612" y="802" textAnchor="middle" fill="#FFFFFF" fontSize="17" fontWeight="700">
+        <line x1="648" y1="840" x2="620" y2="800" stroke="#5D162F" strokeWidth="4.5" />
+        <circle cx="654" cy="850" r="21" fill="#5D162F" />
+        <text x="654" y="857" textAnchor="middle" fill="#FFFFFF" fontSize="17" fontWeight="700">
           S
         </text>
 
-        <line x1="518" y1="784" x2="495" y2="748" stroke="#5D162F" strokeWidth="4" />
-        <circle cx="524" cy="794" r="21" fill="#5D162F" />
-        <text x="524" y="801" textAnchor="middle" fill="#FFFFFF" fontSize="17" fontWeight="700">
+        <line x1="556" y1="842" x2="532" y2="796" stroke="#5D162F" strokeWidth="4.5" />
+        <circle cx="562" cy="852" r="21" fill="#5D162F" />
+        <text x="562" y="859" textAnchor="middle" fill="#FFFFFF" fontSize="17" fontWeight="700">
           A
         </text>
 
-        <g fontSize="11.5" fill="#0F172A">
-          <text x="32" y="542" fontWeight="700">S, T:</text>
-          <text x="68" y="542" fontWeight="600">LIC. EN ADMINISTRACIÓN E</text>
-          <text x="68" y="556" fontWeight="600">ING. EN GESTIÓN EMPRESARIAL</text>
+        {/* Legend (Bottom-Left) */}
+        <g fontSize="11.2" fill="#0F172A">
+          <text x="26" y="576" fontWeight="700">S, T:</text>
+          <text x="64" y="576" fontWeight="600">LIC. EN ADMINISTRACIÓN E</text>
+          <text x="64" y="590" fontWeight="600">ING. EN GESTIÓN EMPRESARIAL</text>
 
-          <text x="32" y="586" fontWeight="700">O, D:</text>
-          <text x="68" y="586" fontWeight="600">ING. CIVIL</text>
+          <text x="26" y="620" fontWeight="700">O, D:</text>
+          <text x="64" y="620" fontWeight="600">ING. CIVIL</text>
 
-          <text x="32" y="616" fontWeight="700">A:</text>
-          <text x="68" y="616" fontWeight="600">ARQUITECTURA</text>
+          <text x="26" y="650" fontWeight="700">A:</text>
+          <text x="64" y="650" fontWeight="600">ARQUITECTURA</text>
 
-          <text x="32" y="646" fontWeight="700">QB:</text>
-          <text x="68" y="646" fontWeight="600">ING. QUÍMICA E ING. BIOQUÍMICA</text>
+          <text x="26" y="680" fontWeight="700">QB:</text>
+          <text x="64" y="680" fontWeight="600">ING. QUÍMICA E ING. BIOQUÍMICA</text>
 
-          <text x="32" y="676" fontWeight="700">SC:</text>
-          <text x="68" y="676" fontWeight="600">ING. EN SISTEMAS, ING. INFORMÁTICA</text>
-          <text x="68" y="690" fontWeight="600">E ING. EN TECNOLOGÍAS DE INF. Y COM.</text>
+          <text x="26" y="710" fontWeight="700">SC:</text>
+          <text x="64" y="710" fontWeight="600">ING. EN SISTEMAS, ING. INFORMÁTICA</text>
+          <text x="64" y="724" fontWeight="600">E ING. EN TECNOLOGÍAS DE INF. Y COM.</text>
 
-          <text x="32" y="720" fontWeight="700">EE:</text>
-          <text x="68" y="720" fontWeight="600">ING. ELÉCTRICA E ING. ELECTRÓNICA</text>
+          <text x="26" y="754" fontWeight="700">EE:</text>
+          <text x="64" y="754" fontWeight="600">ING. ELÉCTRICA E ING. ELECTRÓNICA</text>
 
-          <text x="32" y="750" fontWeight="700">I:</text>
-          <text x="68" y="750" fontWeight="600">ING. INDUSTRIAL</text>
+          <text x="26" y="784" fontWeight="700">I:</text>
+          <text x="64" y="784" fontWeight="600">ING. INDUSTRIAL</text>
 
-          <text x="32" y="780" fontWeight="700">MM:</text>
-          <text x="68" y="780" fontWeight="600">ING. MECÁNICA E ING. MECATRÓNICA</text>
+          <text x="26" y="814" fontWeight="700">MM:</text>
+          <text x="64" y="814" fontWeight="600">ING. MECÁNICA E ING. MECATRÓNICA</text>
 
-          <text x="32" y="810" fontWeight="700">UTD:</text>
-          <text x="68" y="810" fontWeight="600">UNIDAD DE EDUCACIÓN A DISTANCIA</text>
+          <text x="26" y="844" fontWeight="700">UTD:</text>
+          <text x="64" y="844" fontWeight="600">UNIDAD DE EDUCACIÓN A DISTANCIA</text>
         </g>
 
-        <text x="822" y="710" textAnchor="middle" fill="#1E3A5F" fontSize="13" fontWeight="700">
+        {/* Bottom-Right Institutional Label */}
+        <text x="874" y="756" textAnchor="middle" fill="#1E3A5F" fontSize="13" fontWeight="700">
           TECNOLÓGICO
         </text>
-        <text x="822" y="726" textAnchor="middle" fill="#1E3A5F" fontSize="13" fontWeight="700">
+        <text x="874" y="772" textAnchor="middle" fill="#1E3A5F" fontSize="13" fontWeight="700">
           NACIONAL DE MÉXICO
         </text>
-        <text x="822" y="744" textAnchor="middle" fill="#5D162F" fontSize="10" fontWeight="700">
+        <text x="874" y="790" textAnchor="middle" fill="#5D162F" fontSize="10" fontWeight="700">
           CAMPUS DURANGO
         </text>
 
-        <rect x="0" y="868" width="900" height="52" fill="#5D162F" />
+        {/* Bottom Banner */}
+        <rect x="0" y="930" width="960" height="50" fill="#5D162F" />
         <text
-          x="450"
-          y="902"
+          x="480"
+          y="963"
           textAnchor="middle"
           fill="#FFFFFF"
           fontSize="24"
