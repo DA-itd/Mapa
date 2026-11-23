@@ -366,7 +366,7 @@ export function CampusMapView({
   };
 
   return (
-    <div className="relative h-full w-full">
+    <div className="absolute inset-0 h-full w-full">
       <GoogleMapView
         mapId="DEMO_MAP_ID"
         defaultCenter={DURANGO_FALLBACK_CENTER}
