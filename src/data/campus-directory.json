@@ -1,221 +1,294 @@
 {
   "campusName": "Instituto Tecnológico de Durango (TecNM)",
-  "version": "1.0.0",
-  "repositoryHint": "Edita este archivo vía Pull Request en GitHub para actualizar edificios, oficinas, aulas y laboratorios.",
+  "version": "1.1.0",
+  "repositoryHint": "Edita este archivo vía Pull Request en GitHub o desde Brigada GPS para actualizar edificios, coordenadas, oficinas, aulas y laboratorios.",
   "buildings": [
+    {
+      "id": "itd-unidad-sc",
+      "code": "SC",
+      "name": "Sistemas, Informática y TICs (Unidad Norte)",
+      "category": "Académico",
+      "description": "Unidad académica de Ing. en Sistemas Computacionales, Ing. Informática e Ing. en Tecnologías de la Información y Comunicaciones. Ubicada en Unidad Norte junto a Av. Jesús García.",
+      "matchKeywords": ["sistemas", "computacion", "informatica", "centro de computo", "sc"],
+      "customLatLng": null,
+      "spaces": [
+        {
+          "id": "sc-aulas",
+          "code": "Aulas SC",
+          "name": "Módulo de Aulas SC",
+          "kind": "Aula",
+          "floor": "Por relevar",
+          "notes": "Por detallar números de salón y laboratorios en levantamiento."
+        }
+      ]
+    },
+    {
+      "id": "itd-unidad-qb",
+      "code": "QB",
+      "name": "Química y Bioquímica (Unidad Norte)",
+      "category": "Laboratorios",
+      "description": "Unidad académica de Ing. Química e Ing. Bioquímica. Ubicada en Unidad Norte junto al Campo de Beisbol.",
+      "matchKeywords": ["quimica", "bioquimica", "alimentos", "qb"],
+      "customLatLng": null,
+      "spaces": [
+        {
+          "id": "qb-aulas",
+          "code": "Aulas QB",
+          "name": "Módulo de Aulas y Laboratorios QB",
+          "kind": "Laboratorio",
+          "floor": "Por relevar"
+        }
+      ]
+    },
+    {
+      "id": "itd-unidad-ee",
+      "code": "EE",
+      "name": "Eléctrica y Electrónica (Unidad Norte)",
+      "category": "Académico",
+      "description": "Unidad académica de Ing. Eléctrica e Ing. Electrónica junto al Domo en Unidad Norte (Aulas EE 1-14).",
+      "matchKeywords": ["electrica", "electronica", "domo", "ee"],
+      "customLatLng": null,
+      "spaces": [
+        {
+          "id": "ee-aulas",
+          "code": "EE 1-14",
+          "name": "Aulas EE 1 a EE 14",
+          "kind": "Aula",
+          "floor": "Planta Baja / Piso 1"
+        }
+      ]
+    },
+    {
+      "id": "itd-unidad-utd",
+      "code": "UTD",
+      "name": "Unidad de Educación a Distancia (Unidad Norte)",
+      "category": "Académico",
+      "description": "Módulo de Educación a Distancia en Unidad Norte, al sur del Domo (Aulas UTD 1-9).",
+      "matchKeywords": ["distancia", "utd", "educacion a distancia"],
+      "customLatLng": null,
+      "spaces": [
+        {
+          "id": "utd-aulas",
+          "code": "UTD 1-9",
+          "name": "Aulas UTD 1 a UTD 9",
+          "kind": "Aula",
+          "floor": "Por relevar"
+        }
+      ]
+    },
+    {
+      "id": "itd-unidad-i",
+      "code": "I",
+      "name": "Ingeniería Industrial (Unidad Norte)",
+      "category": "Académico",
+      "description": "Unidad académica de Ing. Industrial en Unidad Norte (Aulas I 1-12).",
+      "matchKeywords": ["industrial", "ing industrial"],
+      "customLatLng": null,
+      "spaces": [
+        {
+          "id": "i-aulas",
+          "code": "I 1-12",
+          "name": "Aulas I 1 a I 12",
+          "kind": "Aula",
+          "floor": "Por relevar"
+        }
+      ]
+    },
+    {
+      "id": "itd-unidad-mm",
+      "code": "MM",
+      "name": "Mecánica y Mecatrónica (Unidad Norte)",
+      "category": "Laboratorios",
+      "description": "Unidad académica y talleres de Ing. Mecánica e Ing. Mecatrónica en Unidad Norte cerca de Blvd. Felipe Pescador.",
+      "matchKeywords": ["mecanica", "mecatronica", "talleres", "mm"],
+      "customLatLng": null,
+      "spaces": [
+        {
+          "id": "mm-aulas",
+          "code": "Aulas MM",
+          "name": "Aulas y Talleres MM",
+          "kind": "Laboratorio",
+          "floor": "Planta Baja"
+        }
+      ]
+    },
+    {
+      "id": "itd-unidad-s",
+      "code": "S",
+      "name": "Administración y Gestión Empresarial — Edificio S (Unidad Sur)",
+      "category": "Académico",
+      "description": "Edificio S de Lic. en Administración e Ing. en Gestión Empresarial en Unidad Sur (Aulas S 1-8).",
+      "matchKeywords": ["administracion", "gestion empresarial", "aulas s"],
+      "customLatLng": null,
+      "spaces": [
+        {
+          "id": "s-aulas",
+          "code": "S 1-8",
+          "name": "Aulas S 1 a S 8",
+          "kind": "Aula",
+          "floor": "Por relevar"
+        }
+      ]
+    },
+    {
+      "id": "itd-unidad-t",
+      "code": "T",
+      "name": "Administración y Gestión Empresarial — Edificio T (Unidad Sur)",
+      "category": "Académico",
+      "description": "Edificio T de Lic. en Administración e Ing. en Gestión Empresarial en Unidad Sur (Aulas T 1-14).",
+      "matchKeywords": ["aulas t", "gestion empresarial", "administracion"],
+      "customLatLng": null,
+      "spaces": [
+        {
+          "id": "t-aulas",
+          "code": "T 1-14",
+          "name": "Aulas T 1 a T 14",
+          "kind": "Aula",
+          "floor": "Por relevar"
+        }
+      ]
+    },
+    {
+      "id": "itd-unidad-o",
+      "code": "O",
+      "name": "Ingeniería Civil — Edificio O (Unidad Sur)",
+      "category": "Académico",
+      "description": "Edificio O de Ingeniería Civil en Unidad Sur, al sur del Estadio (Aulas O 1-10).",
+      "matchKeywords": ["civil", "aulas o", "ing civil"],
+      "customLatLng": null,
+      "spaces": [
+        {
+          "id": "o-aulas",
+          "code": "O 1-10",
+          "name": "Aulas O 1 a O 10",
+          "kind": "Aula",
+          "floor": "Por relevar"
+        }
+      ]
+    },
+    {
+      "id": "itd-unidad-d",
+      "code": "D",
+      "name": "Ingeniería Civil — Edificio D (Unidad Sur)",
+      "category": "Académico",
+      "description": "Edificio D de Ingeniería Civil en Unidad Sur (Aulas D 1-12).",
+      "matchKeywords": ["aulas d", "ing civil"],
+      "customLatLng": null,
+      "spaces": [
+        {
+          "id": "d-aulas",
+          "code": "D 1-12",
+          "name": "Aulas D 1 a D 12",
+          "kind": "Aula",
+          "floor": "Por relevar"
+        }
+      ]
+    },
+    {
+      "id": "itd-unidad-a",
+      "code": "A",
+      "name": "Arquitectura — Edificio A (Unidad Sur)",
+      "category": "Académico",
+      "description": "Edificio A de Arquitectura en Unidad Sur, junto a la Plaza Cívica.",
+      "matchKeywords": ["arquitectura", "edificio a"],
+      "customLatLng": null,
+      "spaces": []
+    },
+    {
+      "id": "itd-aulas-u",
+      "code": "U",
+      "name": "Módulo de Aulas U (Unidad Sur)",
+      "category": "Académico",
+      "description": "Módulo de aulas U 1-4 en el sector poniente de Unidad Sur.",
+      "matchKeywords": ["aulas u"],
+      "customLatLng": null,
+      "spaces": [
+        {
+          "id": "u-aulas",
+          "code": "U 1-4",
+          "name": "Aulas U 1 a U 4",
+          "kind": "Aula",
+          "floor": "Por relevar"
+        }
+      ]
+    },
+    {
+      "id": "itd-aulas-h",
+      "code": "H",
+      "name": "Módulo de Aulas H (Unidad Sur)",
+      "category": "Académico",
+      "description": "Módulo de aulas H 1-3 en el sector poniente de Unidad Sur.",
+      "matchKeywords": ["aulas h"],
+      "customLatLng": null,
+      "spaces": [
+        {
+          "id": "h-aulas",
+          "code": "H 1-3",
+          "name": "Aulas H 1 a H 3",
+          "kind": "Aula",
+          "floor": "Por relevar"
+        }
+      ]
+    },
     {
       "id": "itd-centro-informacion",
       "code": "CI",
       "name": "Centro de Información (Biblioteca)",
       "category": "Biblioteca e Información",
-      "description": "Acervo bibliográfico, salas de lectura silenciosa, cubículos de estudio en equipo y hemeroteca.",
+      "description": "Acervo bibliográfico, salas de lectura y cubículos de estudio.",
       "matchKeywords": ["centro de información", "biblioteca", "informacion"],
       "customLatLng": null,
-      "accessibilityNotes": "Rampa de acceso en entrada principal y elevador interior.",
-      "spaces": [
-        {
-          "id": "ci-pb-prestamo",
-          "code": "CI-PB",
-          "name": "Módulo de Préstamo y Credencialización",
-          "kind": "Servicio",
-          "floor": "Planta Baja",
-          "schedule": "L-V 08:00 - 20:00"
-        },
-        {
-          "id": "ci-p1-sala-general",
-          "code": "CI-101",
-          "name": "Sala General de Lectura y Consulta",
-          "kind": "Aula",
-          "floor": "Piso 1",
-          "schedule": "L-V 08:00 - 20:00"
-        },
-        {
-          "id": "ci-p1-cubiculos",
-          "code": "CI-102",
-          "name": "Cubículos de Estudio Colaborativo",
-          "kind": "Servicio",
-          "floor": "Piso 1",
-          "notes": "Reservación previa en mostrador."
-        }
-      ]
-    },
-    {
-      "id": "itd-centro-computo",
-      "code": "CC",
-      "name": "Centro de Cómputo y Sistemas",
-      "category": "Laboratorios",
-      "description": "Laboratorios de cómputo, redes, desarrollo de software y jefatura de Sistemas y Computación.",
-      "matchKeywords": ["centro de cómputo", "computo", "sistemas"],
-      "customLatLng": null,
-      "accessibilityNotes": "Acceso a nivel de andador en planta baja.",
-      "spaces": [
-        {
-          "id": "cc-oficina-sistemas",
-          "code": "DSC-01",
-          "name": "Depto. de Sistemas y Computación",
-          "kind": "Oficina",
-          "floor": "Planta Baja",
-          "schedule": "L-V 08:00 - 15:00 / 16:00 - 19:00"
-        },
-        {
-          "id": "cc-lab-redes",
-          "code": "LAB-RED",
-          "name": "Laboratorio de Redes y Telecomunicaciones",
-          "kind": "Laboratorio",
-          "floor": "Piso 1"
-        },
-        {
-          "id": "cc-lab-sw",
-          "code": "LAB-SW1",
-          "name": "Laboratorio de Programación e Ingeniería de Software",
-          "kind": "Laboratorio",
-          "floor": "Piso 1"
-        }
-      ]
+      "spaces": []
     },
     {
       "id": "itd-administrativo",
       "code": "ADM",
-      "name": "Edificio Administrativo y Dirección",
+      "name": "Edificio Administrativo y Servicios Escolares",
       "category": "Administrativo",
-      "description": "Dirección del plantel, subdirecciones, recursos financieros, gestión tecnológica y vinculación.",
-      "matchKeywords": ["administrativo", "dirección", "rectoria", "instituto tecnológico de durango"],
+      "description": "Dirección, subdirecciones, Servicios Escolares y Gestión Tecnológica y Vinculación.",
+      "matchKeywords": ["administrativo", "dirección", "servicios escolares", "instituto tecnológico de durango"],
       "customLatLng": null,
-      "accessibilityNotes": "Acceso peatonal por plaza cívica.",
-      "spaces": [
-        {
-          "id": "adm-direccion",
-          "code": "DIR-01",
-          "name": "Dirección General del ITD",
-          "kind": "Oficina",
-          "floor": "Piso 1",
-          "schedule": "L-V 09:00 - 15:00"
-        },
-        {
-          "id": "adm-servicios-escolares",
-          "code": "SE-01",
-          "name": "Departamento de Servicios Escolares",
-          "kind": "Servicio",
-          "floor": "Planta Baja",
-          "schedule": "L-V 08:30 - 14:30",
-          "notes": "Constancias, kardex, reinscripciones y titulación."
-        },
-        {
-          "id": "adm-vinculacion",
-          "code": "GTV-01",
-          "name": "Gestión Tecnológica y Vinculación",
-          "kind": "Oficina",
-          "floor": "Planta Baja",
-          "notes": "Residencias profesionales y servicio social."
-        }
-      ]
+      "spaces": []
     },
     {
-      "id": "itd-industrial-mecanica",
-      "code": "ING",
-      "name": "Edificio de Ingenierías y Talleres",
-      "category": "Académico",
-      "description": "Aulas teóricas, talleres de manufactura, metrología y departamentos de Ingeniería Industrial y Mecánica.",
-      "matchKeywords": ["industrial", "mecánica", "mecanica", "ingeniería", "talleres"],
-      "customLatLng": null,
-      "spaces": [
-        {
-          "id": "ing-depto-ind",
-          "code": "DII-01",
-          "name": "Depto. de Ingeniería Industrial",
-          "kind": "Oficina",
-          "floor": "Planta Baja"
-        },
-        {
-          "id": "ing-lab-manufactura",
-          "code": "LAB-CNC",
-          "name": "Laboratorio de Manufactura y CNC",
-          "kind": "Laboratorio",
-          "floor": "Planta Baja"
-        },
-        {
-          "id": "ing-aula-101",
-          "code": "A-101",
-          "name": "Módulo de Aulas Teóricas (101 - 112)",
-          "kind": "Aula",
-          "floor": "Piso 1"
-        }
-      ]
-    },
-    {
-      "id": "itd-quimica-bioquimica",
-      "code": "QUI",
-      "name": "Edificio de Química y Bioquímica",
-      "category": "Laboratorios",
-      "description": "Laboratorios de análisis instrumental, microbiología, química orgánica y coordinación académica.",
-      "matchKeywords": ["química", "quimica", "bioquímica", "bioquimica", "alimentos"],
-      "customLatLng": null,
-      "spaces": [
-        {
-          "id": "qui-depto",
-          "code": "DQB-01",
-          "name": "Depto. de Ingeniería Química y Bioquímica",
-          "kind": "Oficina",
-          "floor": "Planta Baja"
-        },
-        {
-          "id": "qui-lab-micro",
-          "code": "LAB-MB",
-          "name": "Laboratorio de Microbiología y Alimentos",
-          "kind": "Laboratorio",
-          "floor": "Planta Baja"
-        }
-      ]
-    },
-    {
-      "id": "itd-gimnasio-auditorio",
-      "code": "GIM",
-      "name": "Gimnasio Auditorio y Actividades Extraescolares",
+      "id": "itd-estadio",
+      "code": "EST",
+      "name": "Estadio y Pista Atlética (Unidad Sur)",
       "category": "Deporte y Cultura",
-      "description": "Cancha principal, eventos cívicos, culturales y coordinación de actividades deportivas.",
-      "matchKeywords": ["gimnasio", "auditorio", "deportivo", "extraescolares", "cancha"],
+      "description": "Estadio central y pista atlética en Unidad Sur.",
+      "matchKeywords": ["estadio", "pista", "deportivo"],
       "customLatLng": null,
-      "spaces": [
-        {
-          "id": "gim-extraescolares",
-          "code": "EXT-01",
-          "name": "Depto. de Actividades Extraescolares",
-          "kind": "Oficina",
-          "floor": "Planta Baja"
-        },
-        {
-          "id": "gim-auditorio",
-          "code": "AUD-01",
-          "name": "Duela y Graderío Principal",
-          "kind": "Auditorio",
-          "floor": "Planta Baja"
-        }
-      ]
+      "spaces": []
     },
     {
-      "id": "itd-posgrado-investigacion",
-      "code": "DEPI",
-      "name": "División de Estudios de Posgrado e Investigación",
-      "category": "Académico",
-      "description": "Maestrías, doctorados, aulas de seminarios y laboratorios de investigación aplicada.",
-      "matchKeywords": ["posgrado", "investigación", "investigacion", "depi", "maestría"],
+      "id": "itd-canchas-sur",
+      "code": "CAN",
+      "name": "Canchas y Edificios Deportivos (Unidad Sur)",
+      "category": "Deporte y Cultura",
+      "description": "Zona de canchas deportivas en el lado oriente de Unidad Sur.",
+      "matchKeywords": ["canchas", "gimnasio", "deporte"],
       "customLatLng": null,
-      "spaces": [
-        {
-          "id": "depi-coord",
-          "code": "DEPI-01",
-          "name": "Coordinación de Posgrado e Investigación",
-          "kind": "Oficina",
-          "floor": "Planta Baja"
-        },
-        {
-          "id": "depi-sala",
-          "code": "SEM-01",
-          "name": "Sala de Seminarios y Exámenes de Grado",
-          "kind": "Auditorio",
-          "floor": "Piso 1"
-        }
-      ]
+      "spaces": []
+    },
+    {
+      "id": "itd-campo-beisbol",
+      "code": "BEIS",
+      "name": "Campo de Beisbol (Unidad Norte)",
+      "category": "Deporte y Cultura",
+      "description": "Campo de beisbol en Unidad Norte junto a Av. Jesús García y unidad QB.",
+      "matchKeywords": ["beisbol", "campo de beisbol"],
+      "customLatLng": null,
+      "spaces": []
+    },
+    {
+      "id": "itd-plaza-civica",
+      "code": "PLZ",
+      "name": "Plaza Cívica (Unidad Sur)",
+      "category": "Servicios Estudiantiles",
+      "description": "Plaza Cívica principal frente a Edificio A en Unidad Sur.",
+      "matchKeywords": ["plaza civica", "plaza"],
+      "customLatLng": null,
+      "spaces": []
     }
   ]
 }
