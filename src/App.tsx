@@ -308,7 +308,7 @@ export default function App() {
   const isSurveyActive = !keyLoading && (surveyMode || !mapsApiKey);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-slate-50 text-slate-900">
+    <div className="flex h-dvh flex-col overflow-hidden bg-slate-50 text-slate-900">
       {/* Required Case A Quota Banner */}
       {quotaExceeded && (
         <div className="sticky top-0 z-50 border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-center text-xs text-amber-900 shadow-sm md:text-sm">
@@ -426,7 +426,7 @@ export default function App() {
       {/* Main Split Workspace (or Isolated Brigada GPS Box) */}
       <main className="relative flex min-h-0 flex-1 flex-col md:flex-row">
         {!isSurveyActive && sidebarOpen && (
-          <div className="h-[52vh] min-h-0 w-full md:h-full md:w-auto">
+          <div className="h-[46dvh] min-h-0 w-full shrink-0 md:h-full md:w-auto">
             <CampusSidebar
               activeTab={activeTab}
               onTabChange={setActiveTab}
@@ -460,10 +460,10 @@ export default function App() {
 
         {/* Map / Field Survey Viewport */}
         <section
-          className={`relative flex-1 ${
+          className={`relative min-h-0 flex-1 ${
             isSurveyActive
-              ? 'min-h-0 bg-slate-50'
-              : 'min-h-[40vh] bg-slate-200 md:min-h-0'
+              ? 'bg-slate-50'
+              : 'min-h-[260px] bg-slate-200 md:min-h-0'
           }`}
         >
           {keyLoading ? (
