@@ -6,7 +6,6 @@ import type {
 } from '../types/campus';
 
 const STORAGE_KEY = 'itd_campus_contributions_v1';
-const REPO_URL_STORAGE_KEY = 'itd_github_repo_url_v1';
 
 export function loadLocalBuildings(
   baseBuildings: CampusBuildingEntry[]
@@ -34,24 +33,6 @@ export function clearLocalBuildings(): void {
 
 export function hasLocalOverrides(): boolean {
   return Boolean(localStorage.getItem(STORAGE_KEY));
-}
-
-export function loadGithubRepoUrl(): string {
-  const envUrl =
-    (import.meta.env.VITE_GITHUB_REPO_URL as string | undefined) ?? '';
-  try {
-    return (
-      localStorage.getItem(REPO_URL_STORAGE_KEY) ||
-      envUrl ||
-      'https://github.com/DA-itd/Mapa'
-    );
-  } catch {
-    return envUrl || 'https://github.com/DA-itd/Mapa';
-  }
-}
-
-export function saveGithubRepoUrl(url: string): void {
-  localStorage.setItem(REPO_URL_STORAGE_KEY, url.trim());
 }
 
 function normalizeText(value: string): string {
@@ -167,9 +148,9 @@ export function buildDirectoryExportJson(
   return JSON.stringify(
     {
       campusName: 'Instituto Tecnológico de Durango (TecNM)',
-      version: '1.0.0',
+      version: '1.1.0',
       repositoryHint:
-        'Edita este archivo vía Pull Request en GitHub para actualizar edificios, oficinas, aulas y laboratorios.',
+        'Catálogo de edificios, oficinas, aulas y laboratorios del Campus ITD.',
       buildings,
     },
     null,
