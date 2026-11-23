@@ -1,7 +1,7 @@
 {
   "campusName": "Instituto Tecnológico de Durango (TecNM)",
   "version": "1.1.0",
-  "repositoryHint": "Edita este archivo vía Pull Request en GitHub o desde Brigada GPS para actualizar edificios, coordenadas, oficinas, aulas y laboratorios.",
+  "repositoryHint": "Catálogo oficial de edificios, coordenadas, oficinas, aulas y laboratorios del Campus ITD.",
   "buildings": [
     {
       "id": "itd-unidad-sc",
