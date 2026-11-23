@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useMemo, useState} from 'react';
 import {APIProvider} from '@vis.gl/react-google-maps';
-import {GitPullRequest, PanelLeftClose, PanelLeftOpen} from 'lucide-react';
+import {LocateFixed, PanelLeftClose, PanelLeftOpen, Plus} from 'lucide-react';
 import campusDirectorySeed from './data/campus-directory.json';
 import {CampusMapView, type MapPickMode} from './components/CampusMapView';
 import {
@@ -305,6 +305,8 @@ export default function App() {
       ? computedRoute.steps[activeStepIndex].startLocation
       : null;
 
+  const isSurveyActive = !keyLoading && (surveyMode || !mapsApiKey);
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-slate-50 text-slate-900">
       {/* Required Case A Quota Banner */}
@@ -325,103 +327,105 @@ export default function App() {
         </div>
       )}
 
-      {/* 3-Zone Top Bar Contract */}
-      <header className="flex shrink-0 items-center justify-between gap-8 border-b border-slate-200 bg-white px-4 py-3 md:px-6">
-        <a
-          href="/"
-          className="text-base font-bold tracking-tight text-slate-900 whitespace-nowrap shrink-0 md:text-lg"
-        >
-          Mapa Campus ITD
-        </a>
+      {/* 3-Zone Top Bar (Hidden in Brigada GPS mode to keep screen clean and distraction-free) */}
+      {!isSurveyActive && (
+        <header className="flex shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 py-3 md:gap-8 md:px-6">
+          <a
+            href="/"
+            className="text-base font-bold tracking-tight text-slate-900 whitespace-nowrap shrink-0 md:text-lg"
+          >
+            Mapa Campus ITD
+          </a>
 
-        <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
-          <button
-            type="button"
-            onClick={() => {
-              setSurveyMode(false);
-              setActiveTab('explore');
-              setSidebarOpen(true);
-            }}
-            className={`whitespace-nowrap shrink-0 transition-colors hover:text-slate-900 ${
-              !surveyMode && activeTab === 'explore'
-                ? 'font-semibold text-[#6F1D3A]'
-                : ''
-            }`}
-          >
-            Explorar
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setSurveyMode(false);
-              setActiveTab('routes');
-              setSidebarOpen(true);
-            }}
-            className={`whitespace-nowrap shrink-0 transition-colors hover:text-slate-900 ${
-              !surveyMode && activeTab === 'routes'
-                ? 'font-semibold text-[#6F1D3A]'
-                : ''
-            }`}
-          >
-            Rutas
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setSurveyMode(false);
-              setActiveTab('assistant');
-              setSidebarOpen(true);
-            }}
-            className={`whitespace-nowrap shrink-0 transition-colors hover:text-slate-900 ${
-              !surveyMode && activeTab === 'assistant'
-                ? 'font-semibold text-[#6F1D3A]'
-                : ''
-            }`}
-          >
-            Guía Maps
-          </button>
-          <button
-            type="button"
-            onClick={() => setSurveyMode(true)}
-            className={`whitespace-nowrap shrink-0 transition-colors hover:text-slate-900 ${
-              surveyMode ? 'font-semibold text-[#6F1D3A]' : ''
-            }`}
-          >
-            Brigada GPS
-          </button>
-        </nav>
+          <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
+            <button
+              type="button"
+              onClick={() => {
+                setSurveyMode(false);
+                setActiveTab('explore');
+                setSidebarOpen(true);
+              }}
+              className={`whitespace-nowrap shrink-0 transition-colors hover:text-slate-900 ${
+                activeTab === 'explore' ? 'font-semibold text-[#6F1D3A]' : ''
+              }`}
+            >
+              Explorar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSurveyMode(false);
+                setActiveTab('routes');
+                setSidebarOpen(true);
+              }}
+              className={`whitespace-nowrap shrink-0 transition-colors hover:text-slate-900 ${
+                activeTab === 'routes' ? 'font-semibold text-[#6F1D3A]' : ''
+              }`}
+            >
+              Rutas
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSurveyMode(false);
+                setActiveTab('assistant');
+                setSidebarOpen(true);
+              }}
+              className={`whitespace-nowrap shrink-0 transition-colors hover:text-slate-900 ${
+                activeTab === 'assistant' ? 'font-semibold text-[#6F1D3A]' : ''
+              }`}
+            >
+              Guía Maps
+            </button>
+            <button
+              type="button"
+              onClick={() => setSurveyMode(true)}
+              className="whitespace-nowrap shrink-0 transition-colors hover:text-slate-900"
+            >
+              Brigada GPS
+            </button>
+          </nav>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => setSidebarOpen((v) => !v)}
-            aria-label="Alternar panel lateral"
-            className="rounded-lg border border-slate-200 p-2 text-slate-700 hover:bg-slate-50 md:hidden"
-          >
-            {sidebarOpen ? (
-              <PanelLeftClose className="h-4 w-4" />
-            ) : (
-              <PanelLeftOpen className="h-4 w-4" />
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setPendingDraft(null);
-              setEditingBuildingId(selectedLocation?.communityEntryId ?? null);
-              setContributeOpen(true);
-            }}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#6F1D3A] px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#58162d] whitespace-nowrap shrink-0"
-          >
-            <GitPullRequest className="h-3.5 w-3.5" />
-            Contribuir
-          </button>
-        </div>
-      </header>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setSurveyMode(true)}
+              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 whitespace-nowrap shrink-0 md:hidden"
+            >
+              <LocateFixed className="h-3.5 w-3.5 text-[#6F1D3A]" />
+              Brigada
+            </button>
+            <button
+              type="button"
+              onClick={() => setSidebarOpen((v) => !v)}
+              aria-label="Alternar panel lateral"
+              className="rounded-lg border border-slate-200 p-2 text-slate-700 hover:bg-slate-50 md:hidden"
+            >
+              {sidebarOpen ? (
+                <PanelLeftClose className="h-4 w-4" />
+              ) : (
+                <PanelLeftOpen className="h-4 w-4" />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPendingDraft(null);
+                setEditingBuildingId(selectedLocation?.communityEntryId ?? null);
+                setContributeOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#6F1D3A] px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#58162d] whitespace-nowrap shrink-0"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Contribuir
+            </button>
+          </div>
+        </header>
+      )}
 
-      {/* Main Split Workspace */}
+      {/* Main Split Workspace (or Isolated Brigada GPS Box) */}
       <main className="relative flex min-h-0 flex-1 flex-col md:flex-row">
-        {sidebarOpen && (
+        {!isSurveyActive && sidebarOpen && (
           <div className="h-[52vh] min-h-0 w-full md:h-full md:w-auto">
             <CampusSidebar
               activeTab={activeTab}
@@ -455,36 +459,32 @@ export default function App() {
         )}
 
         {/* Map / Field Survey Viewport */}
-        <section className="relative min-h-[40vh] flex-1 bg-slate-200 md:min-h-0">
+        <section
+          className={`relative flex-1 ${
+            isSurveyActive
+              ? 'min-h-0 bg-slate-50'
+              : 'min-h-[40vh] bg-slate-200 md:min-h-0'
+          }`}
+        >
           {keyLoading ? (
             <div className="flex h-full items-center justify-center text-sm text-slate-600">
-              Cargando configuración de Google Maps...
+              Cargando configuración del mapa...
             </div>
-          ) : surveyMode || !mapsApiKey ? (
-            <div className="flex h-full flex-col">
-              {!mapsApiKey && (
-                <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-950">
-                  Vista previa en modo levantamiento GPS (sin clave de Google
-                  Maps activa). Los alumnos pueden capturar coordenadas, aulas y
-                  exportar la base de datos CSV/JSON desde aquí.
-                </div>
-              )}
-              <div className="min-h-0 flex-1">
-                <FieldSurveyPanel
-                  buildings={buildings}
-                  onSaveBuildings={handleSaveBuildings}
-                  hasMapsKey={Boolean(mapsApiKey)}
-                  pickedCoords={pickedBuildingCoords}
-                  onClearPickedCoords={() => setPickedBuildingCoords(null)}
-                  onRequestMapPick={() => {
-                    setPickReturnTarget('survey');
-                    setSurveyMode(false);
-                    setMapPickMode('pin-building');
-                  }}
-                  onFocusCoords={handleFocusCoords}
-                />
-              </div>
-            </div>
+          ) : isSurveyActive ? (
+            <FieldSurveyPanel
+              buildings={buildings}
+              onSaveBuildings={handleSaveBuildings}
+              hasMapsKey={Boolean(mapsApiKey)}
+              onExitSurvey={() => setSurveyMode(false)}
+              pickedCoords={pickedBuildingCoords}
+              onClearPickedCoords={() => setPickedBuildingCoords(null)}
+              onRequestMapPick={() => {
+                setPickReturnTarget('survey');
+                setSurveyMode(false);
+                setMapPickMode('pin-building');
+              }}
+              onFocusCoords={handleFocusCoords}
+            />
           ) : (
             <APIProvider
               apiKey={mapsApiKey}
