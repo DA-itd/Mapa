@@ -27,7 +27,14 @@ import {
   buildDirectoryCsvExport,
   buildDirectoryExportJson,
 } from '../utils/campusStorage';
-import planoItdUrl from '../assets/plano-itd.png?inline';
+
+const planoAssets = import.meta.glob<string>('../assets/plano-itd.png', {
+  eager: true,
+  query: '?inline',
+  import: 'default',
+});
+const planoItdUrl =
+  Object.values(planoAssets)[0] ?? '/assets/aistudio/image_0f38b691.png';
 
 interface FieldSurveyPanelProps {
   buildings: CampusBuildingEntry[];
