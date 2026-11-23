@@ -27,7 +27,6 @@ import {
   buildDirectoryCsvExport,
   buildDirectoryExportJson,
 } from '../utils/campusStorage';
-import {ItdPlanoFallback} from './ItdPlanoFallback';
 
 const planoAssets = import.meta.glob<string>(
   '../assets/*.{png,jpg,jpeg,webp}',
@@ -975,6 +974,590 @@ export function FieldSurveyPanel({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function ItdPlanoFallback({zoomed = false}: {zoomed?: boolean}) {
+  return (
+    <div
+      className={`mx-auto overflow-hidden rounded-lg border border-slate-300 bg-white text-slate-900 shadow-sm ${
+        zoomed ? 'w-full' : 'w-full max-w-3xl'
+      }`}
+    >
+      <svg
+        viewBox="0 0 900 920"
+        className="block h-auto w-full select-none"
+        role="img"
+        aria-label="Plano de unidades académicas del Instituto Tecnológico de Durango"
+      >
+        <rect x="0" y="0" width="900" height="52" fill="#5D162F" />
+        <text
+          x="450"
+          y="34"
+          textAnchor="middle"
+          fill="#FFFFFF"
+          fontSize="24"
+          fontWeight="700"
+          letterSpacing="4"
+        >
+          INSTITUTO TECNOLÓGICO DE DURANGO
+        </text>
+
+        <rect x="0" y="52" width="900" height="816" fill="#FFFFFF" />
+
+        <text
+          x="335"
+          y="108"
+          textAnchor="middle"
+          fill="#1E293B"
+          fontSize="11"
+          fontWeight="700"
+        >
+          AV. JESÚS GARCÍA
+        </text>
+
+        <path
+          d="M 110 120 L 820 120 L 820 400 L 185 400 L 160 310 L 110 140 Z"
+          fill="#F8FAFC"
+          stroke="#1E293B"
+          strokeWidth="2.5"
+        />
+
+        <text
+          x="130"
+          y="225"
+          fill="#1E293B"
+          fontSize="10"
+          fontWeight="700"
+          transform="rotate(71 130 225)"
+        >
+          BLVD. TECNOLÓGICO
+        </text>
+
+        <path
+          d="M 330 125 A 160 125 0 0 0 490 250 L 330 250 Z"
+          fill="#FFFFFF"
+          stroke="#94A3B8"
+          strokeWidth="1.5"
+        />
+        <text x="395" y="192" fill="#334155" fontSize="10" fontWeight="600">
+          Campo de Beisbol
+        </text>
+
+        <rect
+          x="185"
+          y="310"
+          width="115"
+          height="82"
+          rx="4"
+          fill="#FEF2F2"
+          stroke="#EA580C"
+          strokeWidth="1.2"
+        />
+        <text
+          x="242"
+          y="355"
+          textAnchor="middle"
+          fill="#9A3412"
+          fontSize="10"
+          fontWeight="600"
+        >
+          Estacionamiento
+        </text>
+
+        <rect
+          x="320"
+          y="305"
+          width="55"
+          height="65"
+          fill="#FFFFFF"
+          stroke="#475569"
+          strokeWidth="1.5"
+        />
+        <text x="347" y="342" textAnchor="middle" fill="#475569" fontSize="11">
+          h
+        </text>
+
+        <path
+          d="M 645 220 L 735 220 L 770 395 L 605 395 Z"
+          fill="#22C55E"
+          fillOpacity="0.28"
+          stroke="#16A34A"
+          strokeWidth="1"
+        />
+
+        <rect
+          x="505"
+          y="150"
+          width="68"
+          height="32"
+          fill="#FFFFFF"
+          stroke="#1E293B"
+          strokeWidth="1.8"
+        />
+        <text
+          x="539"
+          y="164"
+          textAnchor="middle"
+          fill="#0F172A"
+          fontSize="7.5"
+          fontWeight="700"
+        >
+          SISTEMAS Y
+        </text>
+        <text
+          x="539"
+          y="173"
+          textAnchor="middle"
+          fill="#0F172A"
+          fontSize="7.5"
+          fontWeight="700"
+        >
+          COMPUTACIÓN
+        </text>
+        <text
+          x="539"
+          y="180"
+          textAnchor="middle"
+          fill="#475569"
+          fontSize="7"
+          fontWeight="600"
+        >
+          aulas SC
+        </text>
+
+        <rect
+          x="485"
+          y="198"
+          width="68"
+          height="34"
+          fill="#FFFFFF"
+          stroke="#1E293B"
+          strokeWidth="1.8"
+        />
+        <text
+          x="519"
+          y="211"
+          textAnchor="middle"
+          fill="#0F172A"
+          fontSize="7.5"
+          fontWeight="700"
+        >
+          QUÍMICA Y
+        </text>
+        <text
+          x="519"
+          y="220"
+          textAnchor="middle"
+          fill="#0F172A"
+          fontSize="7.5"
+          fontWeight="700"
+        >
+          BIOQUÍMICA
+        </text>
+        <text
+          x="519"
+          y="229"
+          textAnchor="middle"
+          fill="#475569"
+          fontSize="7"
+          fontWeight="600"
+        >
+          aulas QB
+        </text>
+
+        <rect
+          x="592"
+          y="135"
+          width="62"
+          height="42"
+          fill="#FFFFFF"
+          stroke="#1E293B"
+          strokeWidth="1.8"
+        />
+        <text
+          x="623"
+          y="150"
+          textAnchor="middle"
+          fill="#0F172A"
+          fontSize="8"
+          fontWeight="700"
+        >
+          ELÉCTRICA Y
+        </text>
+        <text
+          x="623"
+          y="160"
+          textAnchor="middle"
+          fill="#0F172A"
+          fontSize="8"
+          fontWeight="700"
+        >
+          ELECTRÓNICA
+        </text>
+        <text
+          x="623"
+          y="171"
+          textAnchor="middle"
+          fill="#475569"
+          fontSize="7.5"
+          fontWeight="700"
+        >
+          aulas EE 1-14
+        </text>
+
+        <rect
+          x="595"
+          y="180"
+          width="56"
+          height="32"
+          fill="#64748B"
+          stroke="#334155"
+          strokeWidth="1.2"
+        />
+        <text
+          x="623"
+          y="200"
+          textAnchor="middle"
+          fill="#FFFFFF"
+          fontSize="9"
+          fontWeight="700"
+        >
+          Domo
+        </text>
+
+        <rect
+          x="592"
+          y="214"
+          width="62"
+          height="30"
+          fill="#FFFFFF"
+          stroke="#1E293B"
+          strokeWidth="1.8"
+        />
+        <text
+          x="623"
+          y="227"
+          textAnchor="middle"
+          fill="#0F172A"
+          fontSize="8"
+          fontWeight="700"
+        >
+          DISTANCIA
+        </text>
+        <text
+          x="623"
+          y="238"
+          textAnchor="middle"
+          fill="#475569"
+          fontSize="7.5"
+          fontWeight="700"
+        >
+          aulas UTD 1-9
+        </text>
+
+        <rect
+          x="592"
+          y="272"
+          width="62"
+          height="32"
+          fill="#FFFFFF"
+          stroke="#1E293B"
+          strokeWidth="1.8"
+        />
+        <text
+          x="623"
+          y="286"
+          textAnchor="middle"
+          fill="#0F172A"
+          fontSize="8"
+          fontWeight="700"
+        >
+          INDUSTRIAL
+        </text>
+        <text
+          x="623"
+          y="297"
+          textAnchor="middle"
+          fill="#475569"
+          fontSize="7.5"
+          fontWeight="700"
+        >
+          aulas I 1-12
+        </text>
+
+        <rect
+          x="554"
+          y="324"
+          width="66"
+          height="34"
+          fill="#FFFFFF"
+          stroke="#1E293B"
+          strokeWidth="1.8"
+        />
+        <text
+          x="587"
+          y="336"
+          textAnchor="middle"
+          fill="#0F172A"
+          fontSize="7.5"
+          fontWeight="700"
+        >
+          MECÁNICA Y
+        </text>
+        <text
+          x="587"
+          y="345"
+          textAnchor="middle"
+          fill="#0F172A"
+          fontSize="7.5"
+          fontWeight="700"
+        >
+          MECATRÓNICA
+        </text>
+        <text
+          x="587"
+          y="354"
+          textAnchor="middle"
+          fill="#475569"
+          fontSize="7"
+          fontWeight="700"
+        >
+          aulas MM
+        </text>
+
+        <text
+          x="834"
+          y="265"
+          textAnchor="middle"
+          fill="#475569"
+          fontSize="8.5"
+          fontWeight="600"
+          transform="rotate(-90 834 265)"
+        >
+          COMISIÓN FEDERAL DE ELECTRICIDAD
+        </text>
+
+        <line x1="478" y1="125" x2="515" y2="156" stroke="#5D162F" strokeWidth="4" />
+        <circle cx="472" cy="116" r="22" fill="#5D162F" />
+        <text x="472" y="123" textAnchor="middle" fill="#FFFFFF" fontSize="16" fontWeight="700">
+          SC
+        </text>
+
+        <line x1="468" y1="192" x2="495" y2="208" stroke="#5D162F" strokeWidth="4" />
+        <circle cx="460" cy="188" r="21" fill="#5D162F" />
+        <text x="460" y="195" textAnchor="middle" fill="#FFFFFF" fontSize="16" fontWeight="700">
+          QB
+        </text>
+
+        <line x1="572" y1="108" x2="604" y2="144" stroke="#5D162F" strokeWidth="4" />
+        <circle cx="566" cy="100" r="22" fill="#5D162F" />
+        <text x="566" y="107" textAnchor="middle" fill="#FFFFFF" fontSize="16" fontWeight="700">
+          EE
+        </text>
+
+        <line x1="692" y1="122" x2="646" y2="224" stroke="#5D162F" strokeWidth="4" />
+        <circle cx="702" cy="106" r="23" fill="#5D162F" />
+        <text x="702" y="112" textAnchor="middle" fill="#FFFFFF" fontSize="14" fontWeight="700">
+          UTD
+        </text>
+
+        <line x1="848" y1="288" x2="648" y2="288" stroke="#5D162F" strokeWidth="4" />
+        <circle cx="862" cy="288" r="22" fill="#5D162F" />
+        <text x="862" y="295" textAnchor="middle" fill="#FFFFFF" fontSize="18" fontWeight="700">
+          I
+        </text>
+
+        <line x1="848" y1="382" x2="618" y2="342" stroke="#5D162F" strokeWidth="4" />
+        <circle cx="864" cy="385" r="22" fill="#5D162F" />
+        <text x="864" y="391" textAnchor="middle" fill="#FFFFFF" fontSize="15" fontWeight="700">
+          MM
+        </text>
+
+        <g transform="translate(88, 365)">
+          <text x="0" y="-62" textAnchor="middle" fill="#475569" fontSize="9.5" fontWeight="600">
+            LIVERPOOL
+          </text>
+          <circle cx="0" cy="0" r="34" fill="none" stroke="#1E293B" strokeWidth="1.5" />
+          <line x1="0" y1="-48" x2="0" y2="92" stroke="#1E293B" strokeWidth="1.5" />
+          <line x1="-44" y1="0" x2="44" y2="0" stroke="#1E293B" strokeWidth="1.5" />
+          <path d="M -34 0 L 0 -36 L 34 0" fill="none" stroke="#1E293B" strokeWidth="1.5" />
+          <text x="10" y="56" fill="#1E293B" fontSize="22" fontWeight="500">
+            norte
+          </text>
+        </g>
+
+        <line x1="190" y1="406" x2="760" y2="412" stroke="#0F172A" strokeWidth="2.5" />
+        <line x1="210" y1="422" x2="755" y2="428" stroke="#0F172A" strokeWidth="2.5" />
+        <text x="518" y="418" textAnchor="middle" fill="#0F172A" fontSize="10" fontWeight="700">
+          BLVD. FELIPE PESCADOR
+        </text>
+
+        <path
+          d="M 215 432 L 758 432 L 758 552 L 668 575 L 705 702 L 420 822 L 215 432 Z"
+          fill="#F8FAFC"
+          stroke="#1E293B"
+          strokeWidth="2.5"
+        />
+
+        <path d="M 326 440 L 368 440 L 468 785 L 425 804 Z" fill="#16A34A" fillOpacity="0.28" />
+
+        <g transform="translate(475, 588) rotate(-21)">
+          <rect x="-62" y="-102" width="124" height="204" rx="62" fill="#991B1B" stroke="#475569" strokeWidth="2" />
+          <rect x="-42" y="-78" width="84" height="156" rx="14" fill="#16A34A" />
+          <text x="0" y="4" textAnchor="middle" fill="#FFFFFF" fontSize="10" fontWeight="700">
+            ESTADIO
+          </text>
+        </g>
+
+        <g transform="translate(275, 514) rotate(-22)">
+          <rect x="0" y="0" width="44" height="16" fill="#FFFFFF" stroke="#0284C7" strokeWidth="1.5" />
+          <text x="22" y="11" textAnchor="middle" fill="#0F172A" fontSize="7" fontWeight="700">
+            aulas U 1-4
+          </text>
+        </g>
+        <g transform="translate(288, 538) rotate(-22)">
+          <rect x="0" y="0" width="44" height="15" fill="#FFFFFF" stroke="#1E293B" strokeWidth="1.3" />
+          <text x="22" y="10" textAnchor="middle" fill="#0F172A" fontSize="7" fontWeight="700">
+            aulas H 1-3
+          </text>
+        </g>
+
+        <rect x="592" y="468" width="54" height="58" fill="#FFFFFF" stroke="#64748B" strokeWidth="1.2" />
+        <text x="619" y="500" textAnchor="middle" fill="#475569" fontSize="8.5" fontWeight="600">
+          CANCHAS
+        </text>
+        <rect x="674" y="456" width="74" height="90" rx="4" fill="#FEF2F2" stroke="#EA580C" strokeWidth="1.2" />
+
+        <g transform="translate(558, 636) rotate(-22)">
+          <rect x="0" y="0" width="92" height="24" fill="#FFFFFF" stroke="#1E293B" strokeWidth="1.5" />
+          <text x="46" y="15" textAnchor="middle" fill="#334155" fontSize="9" fontWeight="700">
+            E
+          </text>
+        </g>
+
+        <g transform="translate(572, 672) rotate(-22)">
+          <rect x="0" y="0" width="86" height="22" fill="#FFFFFF" stroke="#0284C7" strokeWidth="1.8" />
+          <text x="43" y="14" textAnchor="middle" fill="#0F172A" fontSize="8.5" fontWeight="700">
+            aulas O 1-10
+          </text>
+        </g>
+
+        <g transform="translate(580, 702) rotate(-22)">
+          <rect x="0" y="0" width="88" height="22" fill="#FFFFFF" stroke="#0284C7" strokeWidth="1.8" />
+          <text x="44" y="14" textAnchor="middle" fill="#0F172A" fontSize="8.5" fontWeight="700">
+            aulas D 1-12
+          </text>
+        </g>
+
+        <g transform="translate(550, 744) rotate(-22)">
+          <rect x="0" y="0" width="58" height="20" fill="#FFFFFF" stroke="#1E293B" strokeWidth="1.8" />
+          <text x="29" y="13" textAnchor="middle" fill="#0F172A" fontSize="8" fontWeight="700">
+            aulas S 1-8
+          </text>
+        </g>
+        <g transform="translate(614, 720) rotate(-22)">
+          <rect x="0" y="0" width="58" height="20" fill="#FFFFFF" stroke="#1E293B" strokeWidth="1.8" />
+          <text x="29" y="13" textAnchor="middle" fill="#0F172A" fontSize="8" fontWeight="700">
+            aulas T 1-14
+          </text>
+        </g>
+
+        <g transform="translate(466, 705) rotate(-22)">
+          <rect x="0" y="0" width="76" height="46" fill="#FFFFFF" stroke="#1E293B" strokeWidth="1.5" />
+          <text x="38" y="26" textAnchor="middle" fill="#0F172A" fontSize="8.5" fontWeight="700">
+            Arq. (A)
+          </text>
+        </g>
+        <text x="484" y="788" textAnchor="middle" fill="#475569" fontSize="7.5" fontWeight="600">
+          Plaza Cívica
+        </text>
+
+        <line x1="712" y1="664" x2="652" y2="658" stroke="#5D162F" strokeWidth="4" />
+        <circle cx="722" cy="666" r="21" fill="#5D162F" />
+        <text x="722" y="673" textAnchor="middle" fill="#FFFFFF" fontSize="17" fontWeight="700">
+          O
+        </text>
+
+        <line x1="704" y1="712" x2="656" y2="688" stroke="#5D162F" strokeWidth="4" />
+        <circle cx="714" cy="716" r="21" fill="#5D162F" />
+        <text x="714" y="723" textAnchor="middle" fill="#FFFFFF" fontSize="17" fontWeight="700">
+          D
+        </text>
+
+        <line x1="664" y1="758" x2="646" y2="728" stroke="#5D162F" strokeWidth="4" />
+        <circle cx="670" cy="768" r="21" fill="#5D162F" />
+        <text x="670" y="775" textAnchor="middle" fill="#FFFFFF" fontSize="17" fontWeight="700">
+          T
+        </text>
+
+        <line x1="606" y1="786" x2="584" y2="752" stroke="#5D162F" strokeWidth="4" />
+        <circle cx="612" cy="795" r="21" fill="#5D162F" />
+        <text x="612" y="802" textAnchor="middle" fill="#FFFFFF" fontSize="17" fontWeight="700">
+          S
+        </text>
+
+        <line x1="518" y1="784" x2="495" y2="748" stroke="#5D162F" strokeWidth="4" />
+        <circle cx="524" cy="794" r="21" fill="#5D162F" />
+        <text x="524" y="801" textAnchor="middle" fill="#FFFFFF" fontSize="17" fontWeight="700">
+          A
+        </text>
+
+        <g fontSize="11.5" fill="#0F172A">
+          <text x="32" y="542" fontWeight="700">S, T:</text>
+          <text x="68" y="542" fontWeight="600">LIC. EN ADMINISTRACIÓN E</text>
+          <text x="68" y="556" fontWeight="600">ING. EN GESTIÓN EMPRESARIAL</text>
+
+          <text x="32" y="586" fontWeight="700">O, D:</text>
+          <text x="68" y="586" fontWeight="600">ING. CIVIL</text>
+
+          <text x="32" y="616" fontWeight="700">A:</text>
+          <text x="68" y="616" fontWeight="600">ARQUITECTURA</text>
+
+          <text x="32" y="646" fontWeight="700">QB:</text>
+          <text x="68" y="646" fontWeight="600">ING. QUÍMICA E ING. BIOQUÍMICA</text>
+
+          <text x="32" y="676" fontWeight="700">SC:</text>
+          <text x="68" y="676" fontWeight="600">ING. EN SISTEMAS, ING. INFORMÁTICA</text>
+          <text x="68" y="690" fontWeight="600">E ING. EN TECNOLOGÍAS DE INF. Y COM.</text>
+
+          <text x="32" y="720" fontWeight="700">EE:</text>
+          <text x="68" y="720" fontWeight="600">ING. ELÉCTRICA E ING. ELECTRÓNICA</text>
+
+          <text x="32" y="750" fontWeight="700">I:</text>
+          <text x="68" y="750" fontWeight="600">ING. INDUSTRIAL</text>
+
+          <text x="32" y="780" fontWeight="700">MM:</text>
+          <text x="68" y="780" fontWeight="600">ING. MECÁNICA E ING. MECATRÓNICA</text>
+
+          <text x="32" y="810" fontWeight="700">UTD:</text>
+          <text x="68" y="810" fontWeight="600">UNIDAD DE EDUCACIÓN A DISTANCIA</text>
+        </g>
+
+        <text x="822" y="710" textAnchor="middle" fill="#1E3A5F" fontSize="13" fontWeight="700">
+          TECNOLÓGICO
+        </text>
+        <text x="822" y="726" textAnchor="middle" fill="#1E3A5F" fontSize="13" fontWeight="700">
+          NACIONAL DE MÉXICO
+        </text>
+        <text x="822" y="744" textAnchor="middle" fill="#5D162F" fontSize="10" fontWeight="700">
+          CAMPUS DURANGO
+        </text>
+
+        <rect x="0" y="868" width="900" height="52" fill="#5D162F" />
+        <text
+          x="450"
+          y="902"
+          textAnchor="middle"
+          fill="#FFFFFF"
+          fontSize="24"
+          fontWeight="700"
+          letterSpacing="5"
+        >
+          UBICA TU UNIDAD ACADÉMICA
+        </text>
+      </svg>
     </div>
   );
 }
