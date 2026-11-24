@@ -1,10 +1,11 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {
   Check,
   Copy,
   Crosshair,
   Download,
   FileSpreadsheet,
+  FileUp,
   Plus,
   RotateCcw,
   Trash2,
@@ -19,6 +20,8 @@ import type {
 import {
   buildDirectoryCsvExport,
   buildDirectoryExportJson,
+  mergeBuildingCollections,
+  parseImportedDirectoryFile,
 } from '../utils/campusStorage';
 
 export type ContributeModalTab = 'editor' | 'export';
@@ -88,6 +91,11 @@ export function ContributeModal({
   const [draft, setDraft] = useState<CampusBuildingEntry>(createEmptyBuilding);
   const [copied, setCopied] = useState(false);
   const [savedNotice, setSavedNotice] = useState<string | null>(null);
+  const [mergeStatus, setMergeStatus] = useState<{
+    summary: string;
+    errors: string[];
+  } | null>(null);
+  const batchInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -258,6 +266,59 @@ export function ContributeModal({
     URL.revokeObjectURL(url);
   };
 
+  const handleImportBatchFiles = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
+
+    const files = Array.from(fileList);
+    const parsedLists: CampusBuildingEntry[][] = [];
+    const errors: string[] = [];
+    let successCount = 0;
+
+    const contents = await Promise.all(
+      files.map(async (file) => ({
+        name: file.name,
+        text: await file.text(),
+      }))
+    );
+
+    for (const item of contents) {
+      try {
+        const list = parseImportedDirectoryFile(item.name, item.text);
+        if (list.length > 0) {
+          parsedLists.push(list);
+          successCount += 1;
+        } else {
+          errors.push(`${item.name}: sin registros válidos.`);
+        }
+      } catch (err) {
+        errors.push(
+          err instanceof Error ? err.message : `Error al leer ${item.name}`
+        );
+      }
+    }
+
+    if (parsedLists.length > 0) {
+      const result = mergeBuildingCollections(buildings, parsedLists);
+      onSaveBuildings(result.merged);
+      setMergeStatus({
+        summary: `${successCount} ${successCount === 1 ? 'archivo unificado' : 'archivos unificados'} · +${result.addedBuildings} edificios · +${result.addedSpaces} aulas/áreas · ${result.updatedCoords} coordenadas GPS actualizadas.`,
+        errors,
+      });
+    } else {
+      setMergeStatus({
+        summary: 'No se pudieron importar registros de los archivos seleccionados.',
+        errors,
+      });
+    }
+
+    if (batchInputRef.current) {
+      batchInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-[1px]">
       <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
@@ -303,7 +364,7 @@ export function ContributeModal({
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            2. Exportar Base de Datos
+            2. Unificar y Exportar
           </button>
         </div>
 
@@ -574,35 +635,75 @@ export function ContributeModal({
 
           {tab === 'export' && (
             <div className="space-y-4">
+              {/* Multi-file Batch Merger */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-[220px] flex-1">
+                    <h3 className="text-xs font-bold text-slate-900">
+                      Unificar archivos recibidos (.json / .csv)
+                    </h3>
+                    <p className="mt-0.5 text-xs text-slate-600">
+                      Selecciona todos los archivos de brigadistas al mismo
+                      tiempo para combinarlos sin duplicados y actualizar el mapa.
+                    </p>
+                  </div>
+                  <label className="inline-flex min-h-[40px] cursor-pointer items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800 whitespace-nowrap shrink-0">
+                    <FileUp className="h-3.5 w-3.5" />
+                    Seleccionar múltiples CSV / JSON
+                    <input
+                      ref={batchInputRef}
+                      type="file"
+                      multiple
+                      accept=".json,.csv,application/json,text/csv"
+                      onChange={handleImportBatchFiles}
+                      className="sr-only"
+                    />
+                  </label>
+                </div>
+
+                {mergeStatus && (
+                  <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-950">
+                    <p className="font-semibold">{mergeStatus.summary}</p>
+                    {mergeStatus.errors.length > 0 && (
+                      <ul className="mt-1 list-disc pl-4 text-[11px] text-amber-800">
+                        {mergeStatus.errors.map((errMsg, idx) => (
+                          <li key={idx}>{errMsg}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <p className="text-xs leading-relaxed text-slate-600">
-                Descarga el directorio completo con coordenadas GPS, edificios,
-                aulas, laboratorios y oficinas para respaldarlo o abrirlo en
-                Excel.
+                Descarga un solo archivo maestro consolidado con coordenadas GPS,
+                edificios, aulas, laboratorios y oficinas para abrirlo en Excel
+                o respaldarlo.
               </p>
 
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={handleDownloadCsv}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-emerald-800 whitespace-nowrap shrink-0"
+                  className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-emerald-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-emerald-800 whitespace-nowrap shrink-0"
                 >
                   <FileSpreadsheet className="h-3.5 w-3.5" />
-                  Descargar CSV (Excel)
+                  Descargar CSV maestro (Excel)
                 </button>
 
                 <button
                   type="button"
                   onClick={handleDownloadJson}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#6F1D3A] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#58162d] whitespace-nowrap shrink-0"
+                  className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-[#6F1D3A] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#58162d] whitespace-nowrap shrink-0"
                 >
                   <Download className="h-3.5 w-3.5" />
-                  Descargar JSON
+                  Descargar JSON maestro
                 </button>
 
                 <button
                   type="button"
                   onClick={handleCopyJson}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50 whitespace-nowrap shrink-0"
+                  className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50 whitespace-nowrap shrink-0"
                 >
                   {copied ? (
                     <Check className="h-3.5 w-3.5" />
@@ -620,7 +721,7 @@ export function ContributeModal({
                     {buildings.length} edificios
                   </span>
                 </div>
-                <pre className="max-h-72 overflow-auto rounded-lg border border-slate-200 bg-slate-950 p-3.5 font-mono text-xs leading-relaxed text-slate-100">
+                <pre className="max-h-64 overflow-auto rounded-lg border border-slate-200 bg-slate-950 p-3.5 font-mono text-xs leading-relaxed text-slate-100">
                   {exportJson}
                 </pre>
               </div>
