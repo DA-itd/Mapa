@@ -7,6 +7,7 @@ import {
   Crosshair,
   Download,
   FileSpreadsheet,
+  FileUp,
   ListChecks,
   LocateFixed,
   Map as MapIcon,
@@ -26,6 +27,8 @@ import type {
 import {
   buildDirectoryCsvExport,
   buildDirectoryExportJson,
+  mergeBuildingCollections,
+  parseImportedDirectoryFile,
 } from '../utils/campusStorage';
 
 const planoAssets = import.meta.glob<string>(
@@ -160,6 +163,8 @@ export function FieldSurveyPanel({
   const [isListening, setIsListening] = useState(false);
   const [planoZoomed, setPlanoZoomed] = useState(false);
   const [planoLoadError, setPlanoLoadError] = useState(false);
+  const [mergeSummary, setMergeSummary] = useState<string | null>(null);
+  const batchInputRef = useRef<HTMLInputElement | null>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
   const speechSupported = useMemo(() => Boolean(getSpeechRecognitionCtor()), []);
@@ -402,6 +407,50 @@ export function FieldSurveyPanel({
     URL.revokeObjectURL(url);
   };
 
+  const handleImportBatchFiles = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
+
+    const files = Array.from(fileList);
+    const parsedLists: CampusBuildingEntry[][] = [];
+    let successCount = 0;
+
+    const contents = await Promise.all(
+      files.map(async (file) => ({
+        name: file.name,
+        text: await file.text(),
+      }))
+    );
+
+    for (const item of contents) {
+      try {
+        const list = parseImportedDirectoryFile(item.name, item.text);
+        if (list.length > 0) {
+          parsedLists.push(list);
+          successCount += 1;
+        }
+      } catch {
+        // Ignore malformed individual file and continue merging valid ones
+      }
+    }
+
+    if (parsedLists.length > 0) {
+      const result = mergeBuildingCollections(buildings, parsedLists);
+      onSaveBuildings(result.merged);
+      setMergeSummary(
+        `${successCount} ${successCount === 1 ? 'archivo unificado' : 'archivos unificados'} · +${result.addedBuildings} edificios · +${result.addedSpaces} aulas/áreas · ${result.updatedCoords} GPS`
+      );
+    } else {
+      setMergeSummary('No se encontraron registros válidos en los archivos seleccionados.');
+    }
+
+    if (batchInputRef.current) {
+      batchInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="h-full overflow-y-auto bg-slate-50 px-4 py-5 md:py-8">
       <div className="mx-auto w-full max-w-xl pb-8">
@@ -505,19 +554,38 @@ export function FieldSurveyPanel({
 
           {/* Optional Records Drawer */}
           {drawerView === 'records' && (
-            <div className="max-h-[400px] overflow-y-auto border-b border-slate-200 bg-slate-50 p-4">
-              <div className="mb-3 flex items-center justify-between">
+            <div className="max-h-[420px] overflow-y-auto border-b border-slate-200 bg-slate-50 p-4">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <span className="text-xs font-bold text-slate-900">
                   Registros capturados en este dispositivo
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setDrawerView('none')}
-                  className="rounded p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-900"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-800 hover:bg-slate-100 whitespace-nowrap">
+                    <FileUp className="h-3 w-3" />
+                    Unificar CSV/JSON
+                    <input
+                      ref={batchInputRef}
+                      type="file"
+                      multiple
+                      accept=".json,.csv,application/json,text/csv"
+                      onChange={handleImportBatchFiles}
+                      className="sr-only"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setDrawerView('none')}
+                    className="rounded p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-900"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
+              {mergeSummary && (
+                <div className="mb-2.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-950">
+                  {mergeSummary} Ya puedes descargar un solo CSV o JSON arriba.
+                </div>
+              )}
               <div className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
                 {buildings.map((b) => (
                   <div key={b.id} className="px-3.5 py-2.5 text-xs">
