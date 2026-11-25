@@ -4,16 +4,20 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Cloud,
+  CloudOff,
   Crosshair,
   Download,
   FileSpreadsheet,
   FileUp,
   ListChecks,
   LocateFixed,
+  LogOut,
   Map as MapIcon,
   Mic,
   MicOff,
   Trash2,
+  UploadCloud,
   X,
   ZoomIn,
   ZoomOut,
@@ -41,6 +45,11 @@ const planoAssets = import.meta.glob<string>(
 );
 const bundledPlanoUrl = Object.values(planoAssets)[0] ?? null;
 
+export interface CloudSyncUser {
+  uid: string;
+  displayName: string;
+}
+
 interface FieldSurveyPanelProps {
   buildings: CampusBuildingEntry[];
   onSaveBuildings: (updated: CampusBuildingEntry[]) => void;
@@ -50,6 +59,22 @@ interface FieldSurveyPanelProps {
   pickedCoords?: {lat: number; lng: number} | null;
   onClearPickedCoords?: () => void;
   onFocusCoords?: (coords: {lat: number; lng: number}, zoom?: number) => void;
+  cloudUser?: CloudSyncUser | null;
+  cloudSyncing?: boolean;
+  cloudError?: string | null;
+  cloudSpacesCount?: number;
+  onSignInGoogle?: () => Promise<void>;
+  onSignOutGoogle?: () => Promise<void>;
+  onCloudSaveSurveyPoint?: (
+    building: CampusBuildingEntry,
+    newSpace: CampusSpace | null,
+    surveyorLabel?: string
+  ) => Promise<void>;
+  onCloudDeleteSpace?: (spaceId: string) => Promise<void>;
+  onCloudSyncBatch?: (
+    buildingsToSync: CampusBuildingEntry[],
+    uploaderLabel?: string
+  ) => Promise<{buildingsSynced: number; spacesSynced: number}>;
 }
 
 type CapturePhase = 'walk' | 'details';
@@ -121,6 +146,15 @@ export function FieldSurveyPanel({
   pickedCoords,
   onClearPickedCoords,
   onFocusCoords,
+  cloudUser,
+  cloudSyncing = false,
+  cloudError = null,
+  cloudSpacesCount = 0,
+  onSignInGoogle,
+  onSignOutGoogle,
+  onCloudSaveSurveyPoint,
+  onCloudDeleteSpace,
+  onCloudSyncBatch,
 }: FieldSurveyPanelProps) {
   const [phase, setPhase] = useState<CapturePhase>(() =>
     pickedCoords ? 'details' : 'walk'
@@ -279,7 +313,7 @@ export function FieldSurveyPanel({
     recognition.start();
   };
 
-  const handleSaveAndContinue = (e: React.FormEvent) => {
+  const handleSaveAndContinue = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (surveyorName.trim()) {
@@ -305,6 +339,7 @@ export function FieldSurveyPanel({
       : null;
 
     let savedSummary = '';
+    let savedBuildingForCloud: CampusBuildingEntry | null = null;
 
     if (targetBuildingId === '__new__') {
       if (!newBuildingName.trim()) return;
@@ -333,6 +368,7 @@ export function FieldSurveyPanel({
         spaces: newSpace ? [newSpace] : [],
       };
 
+      savedBuildingForCloud = newEntry;
       onSaveBuildings([...buildings, newEntry]);
       setTargetBuildingId(newEntry.id);
       setNewBuildingCode('');
@@ -344,7 +380,7 @@ export function FieldSurveyPanel({
       const target = buildings.find((b) => b.id === targetBuildingId);
       const updated = buildings.map((b) => {
         if (b.id !== targetBuildingId) return b;
-        return {
+        const nextBuilding = {
           ...b,
           customLatLng: activeCoords
             ? {lat: activeCoords.lat, lng: activeCoords.lng}
@@ -353,6 +389,8 @@ export function FieldSurveyPanel({
           updatedAt: today,
           spaces: newSpace ? [...b.spaces, newSpace] : b.spaces,
         };
+        savedBuildingForCloud = nextBuilding;
+        return nextBuilding;
       });
       onSaveBuildings(updated);
       savedSummary = newSpace
@@ -370,11 +408,23 @@ export function FieldSurveyPanel({
     setGpsError(null);
     onClearPickedCoords?.();
     setShowExtras(false);
-    setLastSavedNotice(`${savedSummary}. Listo para el siguiente punto.`);
+    setLastSavedNotice(
+      cloudUser
+        ? `${savedSummary} guardado en la nube. Listo para el siguiente punto.`
+        : `${savedSummary} (solo local). Listo para el siguiente punto.`
+    );
     setPhase('walk');
+
+    if (cloudUser && savedBuildingForCloud && onCloudSaveSurveyPoint) {
+      await onCloudSaveSurveyPoint(
+        savedBuildingForCloud,
+        newSpace,
+        surveyorName.trim() || undefined
+      );
+    }
   };
 
-  const handleDeleteSpace = (buildingId: string, spaceId: string) => {
+  const handleDeleteSpace = async (buildingId: string, spaceId: string) => {
     const updated = buildings.map((b) => {
       if (b.id !== buildingId) return b;
       return {
@@ -383,6 +433,9 @@ export function FieldSurveyPanel({
       };
     });
     onSaveBuildings(updated);
+    if (cloudUser && onCloudDeleteSpace) {
+      await onCloudDeleteSpace(spaceId);
+    }
   };
 
   const handleDownloadCsv = () => {
@@ -439,9 +492,19 @@ export function FieldSurveyPanel({
     if (parsedLists.length > 0) {
       const result = mergeBuildingCollections(buildings, parsedLists);
       onSaveBuildings(result.merged);
-      setMergeSummary(
-        `${successCount} ${successCount === 1 ? 'archivo unificado' : 'archivos unificados'} · +${result.addedBuildings} edificios · +${result.addedSpaces} aulas/áreas · ${result.updatedCoords} GPS`
-      );
+      if (cloudUser && onCloudSyncBatch) {
+        const synced = await onCloudSyncBatch(
+          result.merged,
+          surveyorName.trim() || undefined
+        );
+        setMergeSummary(
+          `${successCount} ${successCount === 1 ? 'archivo unificado' : 'archivos unificados'} y subidos a la nube · +${result.addedBuildings} edificios · +${result.addedSpaces} aulas (${synced.spacesSynced} nuevas en nube)`
+        );
+      } else {
+        setMergeSummary(
+          `${successCount} ${successCount === 1 ? 'archivo unificado' : 'archivos unificados'} · +${result.addedBuildings} edificios · +${result.addedSpaces} aulas/áreas · ${result.updatedCoords} GPS`
+        );
+      }
     } else {
       setMergeSummary('No se encontraron registros válidos en los archivos seleccionados.');
     }
@@ -449,6 +512,17 @@ export function FieldSurveyPanel({
     if (batchInputRef.current) {
       batchInputRef.current.value = '';
     }
+  };
+
+  const handleUploadAllToCloud = async () => {
+    if (!cloudUser || !onCloudSyncBatch) return;
+    const synced = await onCloudSyncBatch(
+      buildings,
+      surveyorName.trim() || undefined
+    );
+    setMergeSummary(
+      `Sincronizado con la nube: ${synced.buildingsSynced} edificios y ${synced.spacesSynced} aulas/áreas nuevas subidas.`
+    );
   };
 
   return (
@@ -498,6 +572,57 @@ export function FieldSurveyPanel({
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Cloud Sync Strip */}
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-white px-4 py-2 sm:px-5">
+            {cloudUser ? (
+              <>
+                <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-800">
+                  <Cloud className="h-3.5 w-3.5 shrink-0 text-emerald-700" />
+                  <span>
+                    {cloudSyncing
+                      ? 'Guardando en la nube...'
+                      : `Nube activa · ${cloudUser.displayName}`}
+                  </span>
+                  {cloudSpacesCount > 0 && (
+                    <span className="font-mono-tabular text-[11px] text-slate-500">
+                      · {cloudSpacesCount} en nube
+                    </span>
+                  )}
+                </div>
+                {onSignOutGoogle && (
+                  <button
+                    type="button"
+                    onClick={onSignOutGoogle}
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 whitespace-nowrap"
+                  >
+                    <LogOut className="h-3 w-3" />
+                    Salir
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                  <CloudOff className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  <span>
+                    {cloudError ??
+                      'Conecta Google para guardar automático en la nube'}
+                  </span>
+                </div>
+                {onSignInGoogle && (
+                  <button
+                    type="button"
+                    onClick={onSignInGoogle}
+                    className="inline-flex min-h-[34px] items-center gap-1.5 rounded-lg bg-[#6F1D3A] px-3 py-1 text-xs font-semibold text-white hover:bg-[#58162d] whitespace-nowrap shrink-0"
+                  >
+                    <Cloud className="h-3.5 w-3.5" />
+                    Conectar Google
+                  </button>
+                )}
+              </>
+            )}
           </div>
 
           {/* Secondary Compact Tools Row */}
@@ -557,9 +682,20 @@ export function FieldSurveyPanel({
             <div className="max-h-[420px] overflow-y-auto border-b border-slate-200 bg-slate-50 p-4">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <span className="text-xs font-bold text-slate-900">
-                  Registros capturados en este dispositivo
+                  Registros capturados ({buildings.length} edificios)
                 </span>
-                <div className="flex items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {cloudUser && onCloudSyncBatch && (
+                    <button
+                      type="button"
+                      onClick={handleUploadAllToCloud}
+                      disabled={cloudSyncing}
+                      className="inline-flex items-center gap-1 rounded-md bg-emerald-700 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-emerald-800 disabled:opacity-50 whitespace-nowrap"
+                    >
+                      <UploadCloud className="h-3 w-3" />
+                      {cloudSyncing ? 'Subiendo...' : 'Subir a la nube'}
+                    </button>
+                  )}
                   <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-800 hover:bg-slate-100 whitespace-nowrap">
                     <FileUp className="h-3 w-3" />
                     Unificar CSV/JSON
@@ -583,7 +719,7 @@ export function FieldSurveyPanel({
               </div>
               {mergeSummary && (
                 <div className="mb-2.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-950">
-                  {mergeSummary} Ya puedes descargar un solo CSV o JSON arriba.
+                  {mergeSummary}
                 </div>
               )}
               <div className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
