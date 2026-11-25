@@ -651,6 +651,8 @@ export default function App() {
               onCloudSaveSurveyPoint={handleCloudSaveSurveyPoint}
               onCloudDeleteSpace={handleCloudDeleteSpace}
               onCloudSyncBatch={handleCloudSyncBatch}
+              hasLocalChanges={localDirty}
+              onResetToBase={handleResetToRepo}
             />
           ) : (
             <APIProvider
