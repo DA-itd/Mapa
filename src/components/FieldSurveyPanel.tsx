@@ -1,6 +1,7 @@
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {
   ArrowLeft,
+  Check,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -16,6 +17,8 @@ import {
   Map as MapIcon,
   Mic,
   MicOff,
+  Plus,
+  Search,
   Trash2,
   UploadCloud,
   X,
@@ -198,6 +201,8 @@ export function FieldSurveyPanel({
   const [planoZoomed, setPlanoZoomed] = useState(false);
   const [planoLoadError, setPlanoLoadError] = useState(false);
   const [mergeSummary, setMergeSummary] = useState<string | null>(null);
+  const [buildingSearch, setBuildingSearch] = useState('');
+  const [showInlinePicker, setShowInlinePicker] = useState(false);
   const batchInputRef = useRef<HTMLInputElement | null>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
@@ -212,10 +217,36 @@ export function FieldSurveyPanel({
   }, [pickedCoords]);
 
   useEffect(() => {
+    if (
+      targetBuildingId !== '__new__' &&
+      !buildings.some((b) => b.id === targetBuildingId) &&
+      buildings.length > 0
+    ) {
+      setTargetBuildingId(buildings[0].id);
+    }
+  }, [buildings, targetBuildingId]);
+
+  useEffect(() => {
     return () => {
       recognitionRef.current?.stop();
     };
   }, []);
+
+  const filteredBuildings = useMemo(() => {
+    const q = buildingSearch
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+    if (!q) return buildings;
+    return buildings.filter((b) => {
+      const hay = `${b.code} ${b.name} ${b.category}`
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+      return hay.includes(q);
+    });
+  }, [buildings, buildingSearch]);
 
   const selectedBuilding = useMemo(
     () => buildings.find((b) => b.id === targetBuildingId) ?? null,
@@ -779,46 +810,117 @@ export function FieldSurveyPanel({
                 </div>
               )}
 
-              {/* Current Building Selector */}
+              {/* Searchable Campus Buildings & Places List */}
               <div>
-                <label className="text-xs font-semibold text-slate-700">
-                  Edificio actual donde estás caminando
-                </label>
-                <select
-                  value={targetBuildingId}
-                  onChange={(e) => setTargetBuildingId(e.target.value)}
-                  className="mt-1.5 min-h-[44px] w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6F1D3A] focus:bg-white focus:outline-none"
-                >
-                  <option value="__new__">+ Registrar nuevo edificio</option>
-                  {buildings.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.code} — {b.name}
-                    </option>
-                  ))}
-                </select>
-                {selectedBuilding && (
-                  <p className="font-mono-tabular mt-1.5 text-[11px] text-slate-500">
-                    {selectedBuilding.spaces.length} áreas registradas ·{' '}
-                    {selectedBuilding.customLatLng
-                      ? `GPS: ${selectedBuilding.customLatLng.lat.toFixed(5)}, ${selectedBuilding.customLatLng.lng.toFixed(5)}`
-                      : 'Aún sin coordenada GPS'}
-                  </p>
-                )}
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-xs font-semibold text-slate-700">
+                    1. Elige el edificio o lugar donde estás ({buildings.length})
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTargetBuildingId('__new__');
+                      setLastSavedNotice(null);
+                      setDrawerView('none');
+                      setPhase('details');
+                      triggerGpsCapture();
+                    }}
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-[#6F1D3A] hover:bg-rose-50 whitespace-nowrap"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Nuevo lugar
+                  </button>
+                </div>
+
+                <div className="relative mt-1.5">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={buildingSearch}
+                    onChange={(e) => setBuildingSearch(e.target.value)}
+                    placeholder="Buscar edificio, cancha, biblioteca, clave..."
+                    className="min-h-[40px] w-full rounded-xl border border-slate-200 bg-slate-50 pl-8 pr-8 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#6F1D3A] focus:bg-white focus:outline-none"
+                  />
+                  {buildingSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setBuildingSearch('')}
+                      aria-label="Limpiar búsqueda"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-700"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <div className="mt-2 max-h-56 divide-y divide-slate-100 overflow-y-auto rounded-xl border border-slate-200 bg-white">
+                  {filteredBuildings.length === 0 ? (
+                    <div className="px-4 py-4 text-center text-xs text-slate-500">
+                      No hay coincidencias con &ldquo;{buildingSearch}&rdquo;.
+                    </div>
+                  ) : (
+                    filteredBuildings.map((b) => {
+                      const isSelected = targetBuildingId === b.id;
+                      return (
+                        <button
+                          key={b.id}
+                          type="button"
+                          onClick={() => setTargetBuildingId(b.id)}
+                          className={`flex w-full items-center justify-between gap-2.5 px-3.5 py-2.5 text-left transition-colors ${
+                            isSelected
+                              ? 'bg-[#6F1D3A]/8 text-slate-950'
+                              : 'hover:bg-slate-50 text-slate-800'
+                          }`}
+                        >
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <span
+                              className={`font-mono-tabular inline-flex min-w-[44px] items-center justify-center rounded-md px-1.5 py-1 text-[11px] font-bold shrink-0 ${
+                                isSelected
+                                  ? 'bg-[#6F1D3A] text-white'
+                                  : 'bg-slate-100 text-slate-700'
+                              }`}
+                            >
+                              {b.code}
+                            </span>
+                            <div className="min-w-0">
+                              <div className="truncate text-xs font-semibold">
+                                {b.name}
+                              </div>
+                              <div className="font-mono-tabular text-[11px] text-slate-500">
+                                {b.spaces.length} áreas ·{' '}
+                                {b.customLatLng ? 'GPS listo' : 'Falta GPS'}
+                              </div>
+                            </div>
+                          </div>
+                          {isSelected && (
+                            <Check className="h-4 w-4 shrink-0 text-[#6F1D3A]" />
+                          )}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
               </div>
 
               {/* Primary Big Walk & Tap Button */}
               <button
                 type="button"
-                onClick={handleStartMarkPoint}
-                className="flex min-h-[88px] w-full flex-col items-center justify-center gap-1.5 rounded-2xl bg-[#6F1D3A] px-6 py-5 text-white shadow-sm transition-colors hover:bg-[#58162d] active:scale-[0.99]"
+                onClick={() => {
+                  if (targetBuildingId === '__new__' && buildings.length > 0) {
+                    setTargetBuildingId(buildings[0].id);
+                  }
+                  handleStartMarkPoint();
+                }}
+                className="flex min-h-[84px] w-full flex-col items-center justify-center gap-1 rounded-2xl bg-[#6F1D3A] px-6 py-4 text-white shadow-sm transition-colors hover:bg-[#58162d] active:scale-[0.99]"
               >
-                <div className="flex items-center gap-2.5 text-base font-bold md:text-lg">
-                  <LocateFixed className="h-6 w-6" />
-                  Marcar punto aquí (Capturar GPS)
+                <div className="flex items-center gap-2 text-base font-bold md:text-lg">
+                  <LocateFixed className="h-5 w-5" />
+                  2. Marcar punto aquí (Capturar GPS)
                 </div>
                 <span className="text-xs font-normal text-white/85">
-                  Presiona frente al salón, laboratorio o entrada y luego
-                  escribe o dicta el nombre
+                  {selectedBuilding
+                    ? `En ${selectedBuilding.code} — ${selectedBuilding.name}`
+                    : 'Presiona frente al salón, laboratorio o entrada'}
                 </span>
               </button>
 
@@ -826,7 +928,12 @@ export function FieldSurveyPanel({
               <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
                 <button
                   type="button"
-                  onClick={handleManualEntryWithoutGps}
+                  onClick={() => {
+                    if (targetBuildingId === '__new__' && buildings.length > 0) {
+                      setTargetBuildingId(buildings[0].id);
+                    }
+                    handleManualEntryWithoutGps();
+                  }}
                   className="min-h-[40px] rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                 >
                   Capturar datos sin GPS
@@ -881,72 +988,137 @@ export function FieldSurveyPanel({
                 </button>
               </div>
 
-              {/* Building Selector */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700">
-                  Edificio
-                </label>
-                <select
-                  value={targetBuildingId}
-                  onChange={(e) => setTargetBuildingId(e.target.value)}
-                  className="mt-1 min-h-[44px] w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-[#6F1D3A] focus:bg-white focus:outline-none"
-                >
-                  <option value="__new__">+ Registrar nuevo edificio</option>
-                  {buildings.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.code} — {b.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {targetBuildingId === '__new__' && (
-                <div className="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-4">
-                  <div>
-                    <label className="text-xs font-semibold text-slate-700">
-                      Clave
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={newBuildingCode}
-                      onChange={(e) => setNewBuildingCode(e.target.value)}
-                      placeholder="Ej. SC"
-                      className="font-mono-tabular mt-1 min-h-[42px] w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm"
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className="text-xs font-semibold text-slate-700">
-                      Nombre del edificio
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={newBuildingName}
-                      onChange={(e) => setNewBuildingName(e.target.value)}
-                      placeholder="Ej. Sistemas y Computación"
-                      className="mt-1 min-h-[42px] w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-slate-700">
-                      Categoría
-                    </label>
-                    <select
-                      value={newBuildingCategory}
-                      onChange={(e) =>
-                        setNewBuildingCategory(
-                          e.target.value as BuildingCategory
-                        )
-                      }
-                      className="mt-1 min-h-[42px] w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm"
+              {/* Selected Building Summary OR New Building Fields (never duplicated) */}
+              {targetBuildingId !== '__new__' && selectedBuilding ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                        Edificio o lugar seleccionado
+                      </span>
+                      <div className="mt-0.5 truncate text-sm font-bold text-slate-900">
+                        <span className="font-mono-tabular mr-1.5 text-[#6F1D3A]">
+                          {selectedBuilding.code}
+                        </span>
+                        {selectedBuilding.name}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowInlinePicker((v) => !v)}
+                      className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 whitespace-nowrap shrink-0"
                     >
-                      {CATEGORIES.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
+                      {showInlinePicker ? 'Listo' : 'Cambiar'}
+                    </button>
+                  </div>
+
+                  {showInlinePicker && (
+                    <div className="mt-2.5 max-h-44 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200 bg-white">
+                      {buildings.map((b) => (
+                        <button
+                          key={b.id}
+                          type="button"
+                          onClick={() => {
+                            setTargetBuildingId(b.id);
+                            setShowInlinePicker(false);
+                          }}
+                          className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-xs ${
+                            b.id === targetBuildingId
+                              ? 'bg-[#6F1D3A]/10 font-bold text-[#6F1D3A]'
+                              : 'hover:bg-slate-50 text-slate-800'
+                          }`}
+                        >
+                          <span className="truncate">
+                            <span className="font-mono-tabular mr-1.5 font-bold">
+                              {b.code}
+                            </span>
+                            {b.name}
+                          </span>
+                          <span className="font-mono-tabular text-[10px] text-slate-400 shrink-0">
+                            {b.customLatLng ? 'GPS ✓' : 'Sin GPS'}
+                          </span>
+                        </button>
                       ))}
-                    </select>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTargetBuildingId('__new__');
+                          setShowInlinePicker(false);
+                        }}
+                        className="flex w-full items-center gap-1.5 px-3 py-2 text-left text-xs font-semibold text-[#6F1D3A] hover:bg-rose-50"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        Registrar otro edificio o lugar nuevo
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-slate-800">
+                      Datos del nuevo edificio o lugar
+                    </span>
+                    {buildings.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTargetBuildingId(buildings[0].id);
+                          setShowInlinePicker(true);
+                        }}
+                        className="text-[11px] font-semibold text-[#6F1D3A] hover:underline"
+                      >
+                        Elegir de la lista ({buildings.length})
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                    <div>
+                      <label className="text-xs font-semibold text-slate-700">
+                        Clave del edificio
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={newBuildingCode}
+                        onChange={(e) => setNewBuildingCode(e.target.value)}
+                        placeholder="Ej. SC"
+                        className="font-mono-tabular mt-1 min-h-[42px] w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Nombre del edificio o lugar
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={newBuildingName}
+                        onChange={(e) => setNewBuildingName(e.target.value)}
+                        placeholder="Ej. Sistemas y Computación"
+                        className="mt-1 min-h-[42px] w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-700">
+                        Categoría
+                      </label>
+                      <select
+                        value={newBuildingCategory}
+                        onChange={(e) =>
+                          setNewBuildingCategory(
+                            e.target.value as BuildingCategory
+                          )
+                        }
+                        className="mt-1 min-h-[42px] w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm"
+                      >
+                        {CATEGORIES.map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
               )}
@@ -954,7 +1126,7 @@ export function FieldSurveyPanel({
               {/* One-tap Type Selection */}
               <div>
                 <label className="text-xs font-semibold text-slate-700">
-                  ¿Qué punto estás registrando?
+                  ¿Qué estás capturando ahorita?
                 </label>
                 <div className="mt-1.5 grid grid-cols-3 gap-2">
                   {ENTRY_KINDS.map((item) => (
@@ -968,19 +1140,19 @@ export function FieldSurveyPanel({
                           : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                       }`}
                     >
-                      {item.label}
+                      {item.value === 'Edificio' ? 'Solo GPS edificio' : item.label}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Room / Lab / Office Inputs */}
+              {/* Room / Lab / Office Inputs (only when registering an interior space) */}
               {entryKind !== 'Edificio' && (
                 <>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <div>
                       <label className="text-xs font-semibold text-slate-700">
-                        Número o clave
+                        Clave del {entryKind.toLowerCase()}
                       </label>
                       <input
                         type="text"
@@ -993,7 +1165,7 @@ export function FieldSurveyPanel({
                     <div className="sm:col-span-2">
                       <div className="flex items-center justify-between">
                         <label className="text-xs font-semibold text-slate-700">
-                          Nombre del lugar
+                          Nombre del {entryKind.toLowerCase()}
                         </label>
                         {speechSupported && (
                           <button
@@ -1023,7 +1195,7 @@ export function FieldSurveyPanel({
                         type="text"
                         value={spaceName}
                         onChange={(e) => setSpaceName(e.target.value)}
-                        placeholder="Ej. Aula 101 / Lab. Redes / Jefatura"
+                        placeholder="Ej. Lab. Redes / Salón 101 / Jefatura"
                         className="mt-1 min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-[#6F1D3A] focus:outline-none"
                       />
                     </div>
