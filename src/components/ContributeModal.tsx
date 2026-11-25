@@ -1,14 +1,18 @@
 import {useEffect, useRef, useState} from 'react';
 import {
   Check,
+  Cloud,
+  CloudOff,
   Copy,
   Crosshair,
   Download,
   FileSpreadsheet,
   FileUp,
+  LogOut,
   Plus,
   RotateCcw,
   Trash2,
+  UploadCloud,
   X,
 } from 'lucide-react';
 import type {
@@ -38,6 +42,16 @@ interface ContributeModalProps {
   onResetToRepo: () => void;
   hasLocalChanges: boolean;
   initialDraft?: CampusBuildingEntry | null;
+  cloudUser?: {uid: string; displayName: string} | null;
+  cloudSyncing?: boolean;
+  cloudError?: string | null;
+  onSignInGoogle?: () => Promise<void>;
+  onSignOutGoogle?: () => Promise<void>;
+  onCloudSaveBuilding?: (building: CampusBuildingEntry) => Promise<void>;
+  onCloudSyncBatch?: (
+    buildingsToSync: CampusBuildingEntry[],
+    uploaderLabel?: string
+  ) => Promise<{buildingsSynced: number; spacesSynced: number}>;
 }
 
 const CATEGORIES: BuildingCategory[] = [
@@ -85,6 +99,13 @@ export function ContributeModal({
   onResetToRepo,
   hasLocalChanges,
   initialDraft,
+  cloudUser,
+  cloudSyncing = false,
+  cloudError = null,
+  onSignInGoogle,
+  onSignOutGoogle,
+  onCloudSaveBuilding,
+  onCloudSyncBatch,
 }: ContributeModalProps) {
   const [tab, setTab] = useState<ContributeModalTab>('editor');
   const [selectedId, setSelectedId] = useState<string>('__new__');
@@ -196,7 +217,7 @@ export function ContributeModal({
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!draft.name.trim()) return;
     const cleaned: CampusBuildingEntry = {
       ...draft,
@@ -227,9 +248,17 @@ export function ContributeModal({
     setSelectedId(cleaned.id);
     setDraft(cleaned);
     onClearPickedCoords();
-    setSavedNotice(
-      'Guardado localmente. Ya puedes verlo en el mapa o exportarlo en formato JSON/CSV.'
-    );
+
+    if (cloudUser && onCloudSaveBuilding) {
+      await onCloudSaveBuilding(cleaned);
+      setSavedNotice(
+        'Guardado y sincronizado en la nube. Ya es visible para todos en el mapa.'
+      );
+    } else {
+      setSavedNotice(
+        'Guardado localmente. Conecta Google para sincronizarlo en la nube o expórtalo.'
+      );
+    }
     setTimeout(() => setSavedNotice(null), 4000);
   };
 
@@ -303,10 +332,18 @@ export function ContributeModal({
     if (parsedLists.length > 0) {
       const result = mergeBuildingCollections(buildings, parsedLists);
       onSaveBuildings(result.merged);
-      setMergeStatus({
-        summary: `${successCount} ${successCount === 1 ? 'archivo unificado' : 'archivos unificados'} · +${result.addedBuildings} edificios · +${result.addedSpaces} aulas/áreas · ${result.updatedCoords} coordenadas GPS actualizadas.`,
-        errors,
-      });
+      if (cloudUser && onCloudSyncBatch) {
+        const synced = await onCloudSyncBatch(result.merged);
+        setMergeStatus({
+          summary: `${successCount} ${successCount === 1 ? 'archivo unificado' : 'archivos unificados'} y subidos a la nube · +${result.addedBuildings} edificios · +${result.addedSpaces} aulas/áreas (${synced.spacesSynced} nuevas en nube).`,
+          errors,
+        });
+      } else {
+        setMergeStatus({
+          summary: `${successCount} ${successCount === 1 ? 'archivo unificado' : 'archivos unificados'} · +${result.addedBuildings} edificios · +${result.addedSpaces} aulas/áreas · ${result.updatedCoords} coordenadas GPS actualizadas.`,
+          errors,
+        });
+      }
     } else {
       setMergeStatus({
         summary: 'No se pudieron importar registros de los archivos seleccionados.',
@@ -317,6 +354,15 @@ export function ContributeModal({
     if (batchInputRef.current) {
       batchInputRef.current.value = '';
     }
+  };
+
+  const handleUploadAllToCloud = async () => {
+    if (!cloudUser || !onCloudSyncBatch) return;
+    const synced = await onCloudSyncBatch(buildings);
+    setMergeStatus({
+      summary: `Sincronización completa: ${synced.buildingsSynced} edificios y ${synced.spacesSynced} aulas/áreas nuevas guardadas en la nube.`,
+      errors: [],
+    });
   };
 
   return (
@@ -342,30 +388,65 @@ export function ContributeModal({
           </button>
         </div>
 
-        {/* Sub-navigation tabs */}
-        <div className="flex gap-2 border-b border-slate-200 bg-slate-50 px-6 py-2.5">
-          <button
-            type="button"
-            onClick={() => setTab('editor')}
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap shrink-0 ${
-              tab === 'editor'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            1. Editar Edificio y Áreas
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('export')}
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap shrink-0 ${
-              tab === 'export'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            2. Unificar y Exportar
-          </button>
+        {/* Sub-navigation tabs + Cloud Status */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-6 py-2.5">
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setTab('editor')}
+              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap shrink-0 ${
+                tab === 'editor'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              1. Editar Edificio y Áreas
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('export')}
+              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap shrink-0 ${
+                tab === 'export'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              2. Unificar y Exportar
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {cloudUser ? (
+              <>
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-800">
+                  <Cloud className="h-3.5 w-3.5 text-emerald-700" />
+                  {cloudSyncing ? 'Sincronizando...' : cloudUser.displayName}
+                </span>
+                {onSignOutGoogle && (
+                  <button
+                    type="button"
+                    onClick={onSignOutGoogle}
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-200 hover:text-slate-900"
+                  >
+                    <LogOut className="h-3 w-3" />
+                    Salir
+                  </button>
+                )}
+              </>
+            ) : (
+              onSignInGoogle && (
+                <button
+                  type="button"
+                  onClick={onSignInGoogle}
+                  title={cloudError ?? undefined}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#6F1D3A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#58162d] whitespace-nowrap"
+                >
+                  <CloudOff className="h-3.5 w-3.5" />
+                  Conectar Google (Nube)
+                </button>
+              )
+            )}
+          </div>
         </div>
 
         {/* Body */}
@@ -682,6 +763,18 @@ export function ContributeModal({
               </p>
 
               <div className="flex flex-wrap gap-2">
+                {cloudUser && onCloudSyncBatch && (
+                  <button
+                    type="button"
+                    onClick={handleUploadAllToCloud}
+                    disabled={cloudSyncing}
+                    className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50 whitespace-nowrap shrink-0"
+                  >
+                    <UploadCloud className="h-3.5 w-3.5" />
+                    {cloudSyncing ? 'Subiendo...' : 'Subir catálogo a la nube'}
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={handleDownloadCsv}
