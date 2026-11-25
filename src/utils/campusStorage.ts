@@ -18,6 +18,21 @@ const LEGACY_PLACEHOLDER_CODES = new Set([
   'DA',
 ]);
 
+const LEGACY_ID_MIGRATION: Record<string, string> = {
+  'itd-unidad-a': 'itd-sur-a',
+  'itd-unidad-s': 'itd-sur-s',
+  'itd-unidad-t': 'itd-sur-t',
+  'itd-unidad-o': 'itd-sur-o',
+  'itd-unidad-d': 'itd-sur-d',
+  'itd-aulas-u': 'itd-sur-u',
+  'itd-aulas-h': 'itd-sur-h',
+  'itd-edificio-e': 'itd-sur-e',
+  'itd-estadio': 'itd-sur-n',
+  'itd-canchas-sur': 'itd-sur-l',
+  'itd-administrativo': 'itd-sur-j',
+  'itd-unidad-i': 'itd-norte-industrial',
+};
+
 export function loadLocalBuildings(
   baseBuildings: CampusBuildingEntry[]
 ): CampusBuildingEntry[] {
@@ -29,14 +44,23 @@ export function loadLocalBuildings(
       return baseBuildings;
     }
     const baseIds = new Set(baseBuildings.map((b) => b.id));
-    const filtered = parsed.filter((entry) => {
-      if (!entry || typeof entry.name !== 'string') return false;
-      const isLegacyPlaceholder =
-        !baseIds.has(entry.id) &&
+    const filtered: CampusBuildingEntry[] = [];
+    for (const entry of parsed) {
+      if (!entry || typeof entry.name !== 'string') continue;
+      const migratedId = LEGACY_ID_MIGRATION[entry.id] ?? entry.id;
+      const isLegacyUnpinned =
+        !baseIds.has(migratedId) &&
         LEGACY_PLACEHOLDER_CODES.has((entry.code ?? '').trim().toUpperCase()) &&
         !entry.customLatLng;
-      return !isLegacyPlaceholder;
-    });
+      if (isLegacyUnpinned) continue;
+      if (entry.id in LEGACY_ID_MIGRATION && !entry.customLatLng) {
+        continue;
+      }
+      filtered.push({
+        ...entry,
+        id: migratedId,
+      });
+    }
     if (filtered.length === 0) {
       return baseBuildings;
     }
@@ -448,12 +472,21 @@ export function mergeBuildingCollections(
     const incId = normalizeText(incoming.id);
     const incCode = normalizeText(incoming.code);
     const incName = normalizeText(incoming.name);
-    return merged.findIndex(
-      (b) =>
-        normalizeText(b.id) === incId ||
-        (incCode && incCode !== 'itd' && normalizeText(b.code) === incCode) ||
-        normalizeText(b.name) === incName
-    );
+    const byId = merged.findIndex((b) => normalizeText(b.id) === incId);
+    if (byId !== -1) return byId;
+
+    const byName = merged.findIndex((b) => normalizeText(b.name) === incName);
+    if (byName !== -1) return byName;
+
+    if (incCode && incCode !== 'itd') {
+      const codeMatches = merged.filter(
+        (b) => normalizeText(b.code) === incCode
+      );
+      if (codeMatches.length === 1) {
+        return merged.indexOf(codeMatches[0]);
+      }
+    }
+    return -1;
   };
 
   for (const list of importedLists) {
