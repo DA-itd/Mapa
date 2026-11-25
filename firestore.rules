@@ -1,0 +1,274 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // =========================================================================
+    // Global Safety Net (Default Deny)
+    // =========================================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // Core Primitives & Identity Helpers
+    // =========================================================================
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string &&
+        id.size() >= 1 &&
+        id.size() <= 128 &&
+        id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == 'irione@gmail.com'
+      );
+    }
+
+    function isValidLatLng(val) {
+      return val == null || (
+        val is map &&
+        val.keys().hasAll(['lat', 'lng']) &&
+        val.keys().hasOnly(['lat', 'lng']) &&
+        val.lat is number &&
+        val.lng is number &&
+        val.lat >= -90 &&
+        val.lat <= 90 &&
+        val.lng >= -180 &&
+        val.lng <= 180
+      );
+    }
+
+    function isValidCategory(cat) {
+      return cat in [
+        'Académico',
+        'Laboratorios',
+        'Administrativo',
+        'Biblioteca e Información',
+        'Deporte y Cultura',
+        'Servicios Estudiantiles'
+      ];
+    }
+
+    function isValidSpaceKind(kind) {
+      return kind in [
+        'Aula',
+        'Laboratorio',
+        'Oficina',
+        'Servicio',
+        'Auditorio'
+      ];
+    }
+
+    // =========================================================================
+    // Validation Blueprints
+    // =========================================================================
+    function isValidCampusBuilding(data, buildingId) {
+      return data.keys().hasAll([
+        'id',
+        'code',
+        'name',
+        'category',
+        'description',
+        'matchKeywords',
+        'visibility',
+        'createdByUid',
+        'updatedByUid',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id',
+        'code',
+        'name',
+        'category',
+        'description',
+        'matchKeywords',
+        'placeId',
+        'customLatLng',
+        'accessibilityNotes',
+        'visibility',
+        'updatedBy',
+        'createdByUid',
+        'updatedByUid',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.id == buildingId &&
+      isValidId(data.id) &&
+      data.code is string && data.code.size() >= 1 && data.code.size() <= 20 &&
+      data.name is string && data.name.size() >= 1 && data.name.size() <= 140 &&
+      data.category is string && isValidCategory(data.category) &&
+      data.description is string && data.description.size() <= 600 &&
+      data.matchKeywords is list &&
+      data.matchKeywords.size() <= 15 &&
+      (data.matchKeywords.size() == 0 || data.matchKeywords[0] is string) &&
+      (!('placeId' in data) || (data.placeId is string && data.placeId.size() <= 160)) &&
+      (!('customLatLng' in data) || isValidLatLng(data.customLatLng)) &&
+      (!('accessibilityNotes' in data) || (data.accessibilityNotes is string && data.accessibilityNotes.size() <= 300)) &&
+      data.visibility == 'public' &&
+      (!('updatedBy' in data) || (data.updatedBy is string && data.updatedBy.size() <= 80)) &&
+      isValidId(data.createdByUid) &&
+      data.updatedByUid == request.auth.uid &&
+      isValidId(data.updatedByUid) &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidCampusSpace(data, spaceId) {
+      return data.keys().hasAll([
+        'id',
+        'buildingId',
+        'code',
+        'name',
+        'kind',
+        'floor',
+        'visibility',
+        'createdByUid',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id',
+        'buildingId',
+        'code',
+        'name',
+        'kind',
+        'floor',
+        'schedule',
+        'notes',
+        'visibility',
+        'createdByName',
+        'createdByUid',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.id == spaceId &&
+      isValidId(data.id) &&
+      isValidId(data.buildingId) &&
+      data.code is string && data.code.size() >= 1 && data.code.size() <= 30 &&
+      data.name is string && data.name.size() >= 1 && data.name.size() <= 140 &&
+      data.kind is string && isValidSpaceKind(data.kind) &&
+      data.floor is string && data.floor.size() >= 1 && data.floor.size() <= 50 &&
+      (!('schedule' in data) || (data.schedule is string && data.schedule.size() <= 120)) &&
+      (!('notes' in data) || (data.notes is string && data.notes.size() <= 300)) &&
+      data.visibility == 'public' &&
+      (!('createdByName' in data) || (data.createdByName is string && data.createdByName.size() <= 80)) &&
+      isValidId(data.createdByUid) &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    // =========================================================================
+    // Collection Rules
+    // =========================================================================
+    match /admins/{adminUid} {
+      allow get: if isSignedIn() && (request.auth.uid == adminUid || isAdmin());
+      allow list, create, update, delete: if false;
+    }
+
+    match /campusBuildings/{buildingId} {
+      allow get: if isValidId(buildingId) && (resource == null || existing().visibility == 'public');
+      allow list: if existing().visibility == 'public';
+
+      allow create: if isVerifiedUser() &&
+        isValidId(buildingId) &&
+        isValidCampusBuilding(incoming(), buildingId) &&
+        incoming().createdByUid == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isVerifiedUser() &&
+        isValidId(buildingId) &&
+        isValidCampusBuilding(incoming(), buildingId) &&
+        incoming().createdByUid == existing().createdByUid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          // Brigada GPS / Contribución: actualiza coordenadas o ficha sin alterar identidad ni visibilidad
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'code',
+            'name',
+            'category',
+            'description',
+            'matchKeywords',
+            'placeId',
+            'customLatLng',
+            'accessibilityNotes',
+            'updatedBy',
+            'updatedByUid',
+            'updatedAt'
+          ])
+        );
+
+      allow delete: if isValidId(buildingId) && (
+        isAdmin() ||
+        (isVerifiedUser() && existing().createdByUid == request.auth.uid)
+      );
+    }
+
+    match /campusSpaces/{spaceId} {
+      allow get: if isValidId(spaceId) && (resource == null || existing().visibility == 'public');
+      allow list: if existing().visibility == 'public';
+
+      allow create: if isVerifiedUser() &&
+        isValidId(spaceId) &&
+        isValidCampusSpace(incoming(), spaceId) &&
+        incoming().createdByUid == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (
+          exists(/databases/$(database)/documents/campusBuildings/$(incoming().buildingId)) ||
+          existsAfter(/databases/$(database)/documents/campusBuildings/$(incoming().buildingId))
+        );
+
+      allow update: if isVerifiedUser() &&
+        isValidId(spaceId) &&
+        isValidCampusSpace(incoming(), spaceId) &&
+        incoming().createdByUid == existing().createdByUid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().buildingId == existing().buildingId &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/campusBuildings/$(incoming().buildingId)) &&
+        (
+          isAdmin() ||
+          (
+            existing().createdByUid == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'code',
+              'name',
+              'kind',
+              'floor',
+              'schedule',
+              'notes',
+              'createdByName',
+              'updatedAt'
+            ])
+          )
+        );
+
+      allow delete: if isValidId(spaceId) && (
+        isAdmin() ||
+        (isVerifiedUser() && existing().createdByUid == request.auth.uid)
+      );
+    }
+  }
+}
