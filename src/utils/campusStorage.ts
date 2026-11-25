@@ -9,6 +9,15 @@ import type {
 
 const STORAGE_KEY = 'itd_campus_contributions_v1';
 
+const LEGACY_PLACEHOLDER_CODES = new Set([
+  'CC',
+  'ING',
+  'QUI',
+  'GIM',
+  'DEPI',
+  'DA',
+]);
+
 export function loadLocalBuildings(
   baseBuildings: CampusBuildingEntry[]
 ): CampusBuildingEntry[] {
@@ -19,7 +28,19 @@ export function loadLocalBuildings(
     if (!Array.isArray(parsed) || parsed.length === 0) {
       return baseBuildings;
     }
-    return mergeBuildingCollections(baseBuildings, [parsed]).merged;
+    const baseIds = new Set(baseBuildings.map((b) => b.id));
+    const filtered = parsed.filter((entry) => {
+      if (!entry || typeof entry.name !== 'string') return false;
+      const isLegacyPlaceholder =
+        !baseIds.has(entry.id) &&
+        LEGACY_PLACEHOLDER_CODES.has((entry.code ?? '').trim().toUpperCase()) &&
+        !entry.customLatLng;
+      return !isLegacyPlaceholder;
+    });
+    if (filtered.length === 0) {
+      return baseBuildings;
+    }
+    return mergeBuildingCollections(baseBuildings, [filtered]).merged;
   } catch {
     return baseBuildings;
   }
