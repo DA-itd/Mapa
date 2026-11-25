@@ -19,7 +19,7 @@ export function loadLocalBuildings(
     if (!Array.isArray(parsed) || parsed.length === 0) {
       return baseBuildings;
     }
-    return parsed;
+    return mergeBuildingCollections(baseBuildings, [parsed]).merged;
   } catch {
     return baseBuildings;
   }
