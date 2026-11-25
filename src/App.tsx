@@ -1,5 +1,11 @@
 import {useCallback, useEffect, useMemo, useState} from 'react';
 import {APIProvider} from '@vis.gl/react-google-maps';
+import {
+  onAuthStateChanged,
+  signInWithPopup,
+  signOut,
+  type User,
+} from 'firebase/auth';
 import {LocateFixed, PanelLeftClose, PanelLeftOpen, Plus} from 'lucide-react';
 import campusDirectorySeed from './data/campus-directory.json';
 import {CampusMapView, type MapPickMode} from './components/CampusMapView';
@@ -10,8 +16,10 @@ import {
 } from './components/CampusSidebar';
 import {ContributeModal} from './components/ContributeModal';
 import {FieldSurveyPanel} from './components/FieldSurveyPanel';
+import {auth, googleProvider} from './firebase';
 import type {
   CampusBuildingEntry,
+  CampusSpace,
   ComputedRouteResult,
   DiscoveredGooglePlace,
   ResolvedCampusLocation,
@@ -24,6 +32,16 @@ import {
   mergeCampusLocations,
   saveLocalBuildings,
 } from './utils/campusStorage';
+import {
+  deleteCloudSpaceById,
+  mergeCloudIntoBuildings,
+  saveCloudBuildingWithSpaces,
+  saveCloudSurveyPoint,
+  subscribeCampusCloudData,
+  syncBatchToCloud,
+  type CloudBuildingDoc,
+  type CloudSpaceDoc,
+} from './utils/firestoreCampus';
 
 const BASE_BUILDINGS =
   campusDirectorySeed.buildings as CampusBuildingEntry[];
@@ -42,6 +60,16 @@ export default function App() {
   const [localDirty, setLocalDirty] = useState<boolean>(() =>
     hasLocalOverrides()
   );
+  const [authReady, setAuthReady] = useState<boolean>(false);
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [cloudBuildings, setCloudBuildings] = useState<
+    Map<string, CloudBuildingDoc>
+  >(() => new Map());
+  const [cloudSpaces, setCloudSpaces] = useState<Map<string, CloudSpaceDoc>>(
+    () => new Map()
+  );
+  const [cloudSyncing, setCloudSyncing] = useState<boolean>(false);
+  const [cloudError, setCloudError] = useState<string | null>(null);
   const [discoveredPlaces, setDiscoveredPlaces] = useState<
     DiscoveredGooglePlace[]
   >([]);
@@ -127,9 +155,31 @@ export default function App() {
     };
   }, [mapsApiKey]);
 
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setAuthUser(user);
+      setAuthReady(true);
+    });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    if (!authReady) return;
+    const unsub = subscribeCampusCloudData((nextBuildings, nextSpaces) => {
+      setCloudBuildings(nextBuildings);
+      setCloudSpaces(nextSpaces);
+    });
+    return () => unsub();
+  }, [authReady]);
+
+  const effectiveBuildings = useMemo(
+    () => mergeCloudIntoBuildings(buildings, cloudBuildings, cloudSpaces),
+    [buildings, cloudBuildings, cloudSpaces]
+  );
+
   const resolvedLocations = useMemo(
-    () => mergeCampusLocations(buildings, discoveredPlaces),
-    [buildings, discoveredPlaces]
+    () => mergeCampusLocations(effectiveBuildings, discoveredPlaces),
+    [effectiveBuildings, discoveredPlaces]
   );
 
   const selectedLocation = useMemo(
@@ -286,6 +336,107 @@ export default function App() {
     saveLocalBuildings(updated);
     setLocalDirty(true);
   }, []);
+
+  const handleSignInGoogle = useCallback(async () => {
+    setCloudError(null);
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : 'No se pudo iniciar sesión.';
+      if (!msg.includes('popup-closed-by-user')) {
+        setCloudError('No se pudo conectar con Google. Intenta nuevamente.');
+      }
+    }
+  }, []);
+
+  const handleSignOutGoogle = useCallback(async () => {
+    setCloudError(null);
+    await signOut(auth);
+  }, []);
+
+  const handleCloudSaveBuilding = useCallback(
+    async (building: CampusBuildingEntry) => {
+      if (!authUser || !authUser.emailVerified) return;
+      setCloudSyncing(true);
+      setCloudError(null);
+      try {
+        await saveCloudBuildingWithSpaces({
+          building,
+          uid: authUser.uid,
+          displayName: authUser.displayName ?? undefined,
+          cloudBuildings,
+          cloudSpaces,
+        });
+      } finally {
+        setCloudSyncing(false);
+      }
+    },
+    [authUser, cloudBuildings, cloudSpaces]
+  );
+
+  const handleCloudSaveSurveyPoint = useCallback(
+    async (
+      building: CampusBuildingEntry,
+      newSpace: CampusSpace | null,
+      surveyorLabel?: string
+    ) => {
+      if (!authUser || !authUser.emailVerified) return;
+      setCloudSyncing(true);
+      setCloudError(null);
+      try {
+        await saveCloudSurveyPoint({
+          building,
+          newSpace,
+          uid: authUser.uid,
+          displayName:
+            surveyorLabel?.trim() || authUser.displayName || undefined,
+          cloudBuildings,
+        });
+      } finally {
+        setCloudSyncing(false);
+      }
+    },
+    [authUser, cloudBuildings]
+  );
+
+  const handleCloudDeleteSpace = useCallback(
+    async (spaceId: string) => {
+      if (!authUser || !authUser.emailVerified || !cloudSpaces.has(spaceId)) {
+        return;
+      }
+      setCloudSyncing(true);
+      try {
+        await deleteCloudSpaceById(spaceId);
+      } finally {
+        setCloudSyncing(false);
+      }
+    },
+    [authUser, cloudSpaces]
+  );
+
+  const handleCloudSyncBatch = useCallback(
+    async (listToSync: CampusBuildingEntry[], uploaderLabel?: string) => {
+      if (!authUser || !authUser.emailVerified) {
+        return {buildingsSynced: 0, spacesSynced: 0};
+      }
+      setCloudSyncing(true);
+      setCloudError(null);
+      try {
+        return await syncBatchToCloud({
+          buildings: listToSync,
+          uid: authUser.uid,
+          displayName:
+            uploaderLabel?.trim() || authUser.displayName || undefined,
+          cloudBuildings,
+          cloudSpaces,
+        });
+      } finally {
+        setCloudSyncing(false);
+      }
+    },
+    [authUser, cloudBuildings, cloudSpaces]
+  );
 
   const handleResetToRepo = useCallback(() => {
     clearLocalBuildings();
@@ -472,7 +623,7 @@ export default function App() {
             </div>
           ) : isSurveyActive ? (
             <FieldSurveyPanel
-              buildings={buildings}
+              buildings={effectiveBuildings}
               onSaveBuildings={handleSaveBuildings}
               hasMapsKey={Boolean(mapsApiKey)}
               onExitSurvey={() => setSurveyMode(false)}
@@ -484,6 +635,22 @@ export default function App() {
                 setMapPickMode('pin-building');
               }}
               onFocusCoords={handleFocusCoords}
+              cloudUser={
+                authUser && authUser.emailVerified
+                  ? {
+                      uid: authUser.uid,
+                      displayName: authUser.displayName || authUser.email || 'Brigadista',
+                    }
+                  : null
+              }
+              cloudSyncing={cloudSyncing}
+              cloudError={cloudError}
+              cloudSpacesCount={cloudSpaces.size}
+              onSignInGoogle={handleSignInGoogle}
+              onSignOutGoogle={handleSignOutGoogle}
+              onCloudSaveSurveyPoint={handleCloudSaveSurveyPoint}
+              onCloudDeleteSpace={handleCloudDeleteSpace}
+              onCloudSyncBatch={handleCloudSyncBatch}
             />
           ) : (
             <APIProvider
@@ -535,7 +702,7 @@ export default function App() {
           setContributeOpen(false);
           setPendingDraft(null);
         }}
-        buildings={buildings}
+        buildings={effectiveBuildings}
         editingBuildingId={editingBuildingId}
         pickedCoords={pickedBuildingCoords}
         onClearPickedCoords={() => setPickedBuildingCoords(null)}
@@ -544,6 +711,20 @@ export default function App() {
         onResetToRepo={handleResetToRepo}
         hasLocalChanges={localDirty}
         initialDraft={pendingDraft}
+        cloudUser={
+          authUser && authUser.emailVerified
+            ? {
+                uid: authUser.uid,
+                displayName: authUser.displayName || authUser.email || 'Brigadista',
+              }
+            : null
+        }
+        cloudSyncing={cloudSyncing}
+        cloudError={cloudError}
+        onSignInGoogle={handleSignInGoogle}
+        onSignOutGoogle={handleSignOutGoogle}
+        onCloudSaveBuilding={handleCloudSaveBuilding}
+        onCloudSyncBatch={handleCloudSyncBatch}
       />
     </div>
   );
