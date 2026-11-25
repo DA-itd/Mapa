@@ -1,0 +1,187 @@
+{
+  "entities": {
+    "CampusBuilding": {
+      "title": "CampusBuilding",
+      "description": "Edificio o zona principal del Instituto Tecnológico de Durango sincronizado en tiempo real.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 140
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "Académico",
+            "Laboratorios",
+            "Administrativo",
+            "Biblioteca e Información",
+            "Deporte y Cultura",
+            "Servicios Estudiantiles"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 600
+        },
+        "matchKeywords": {
+          "type": "array",
+          "description": "Palabras clave para vincular lugares en Google Maps (máximo 15)."
+        },
+        "placeId": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "customLatLng": {
+          "type": "object",
+          "description": "Coordenadas GPS { lat, lng } opcionales o null."
+        },
+        "accessibilityNotes": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["public"]
+        },
+        "updatedBy": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "createdByUid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "updatedByUid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "code",
+        "name",
+        "category",
+        "description",
+        "matchKeywords",
+        "visibility",
+        "createdByUid",
+        "updatedByUid",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CampusSpace": {
+      "title": "CampusSpace",
+      "description": "Aula, laboratorio, oficina o servicio interior perteneciente a un edificio del campus.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "buildingId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 140
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["Aula", "Laboratorio", "Oficina", "Servicio", "Auditorio"]
+        },
+        "floor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "schedule": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["public"]
+        },
+        "createdByName": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "createdByUid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "buildingId",
+        "code",
+        "name",
+        "kind",
+        "floor",
+        "visibility",
+        "createdByUid",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/campusBuildings/{buildingId}": {
+      "schema": {
+        "$ref": "#/entities/CampusBuilding"
+      },
+      "description": "Directorio compartido en tiempo real de edificios y coordenadas GPS del Campus ITD."
+    },
+    "/campusSpaces/{spaceId}": {
+      "schema": {
+        "$ref": "#/entities/CampusSpace"
+      },
+      "description": "Aulas, laboratorios, oficinas y servicios vinculados a un edificio padre en campusBuildings."
+    }
+  }
+}
