@@ -18,6 +18,7 @@ import {
   Mic,
   MicOff,
   Plus,
+  RotateCcw,
   Search,
   Trash2,
   UploadCloud,
@@ -78,6 +79,8 @@ interface FieldSurveyPanelProps {
     buildingsToSync: CampusBuildingEntry[],
     uploaderLabel?: string
   ) => Promise<{buildingsSynced: number; spacesSynced: number}>;
+  hasLocalChanges?: boolean;
+  onResetToBase?: () => void;
 }
 
 type CapturePhase = 'walk' | 'details';
@@ -158,6 +161,8 @@ export function FieldSurveyPanel({
   onCloudSaveSurveyPoint,
   onCloudDeleteSpace,
   onCloudSyncBatch,
+  hasLocalChanges = false,
+  onResetToBase,
 }: FieldSurveyPanelProps) {
   const [phase, setPhase] = useState<CapturePhase>(() =>
     pickedCoords ? 'details' : 'walk'
@@ -739,6 +744,19 @@ export function FieldSurveyPanel({
                       className="sr-only"
                     />
                   </label>
+                  {hasLocalChanges && onResetToBase && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onResetToBase();
+                        setMergeSummary('Lista oficial del Campus ITD restablecida.');
+                      }}
+                      className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 whitespace-nowrap"
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                      Restablecer lista
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setDrawerView('none')}
