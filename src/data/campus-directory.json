@@ -289,6 +289,26 @@
       "matchKeywords": ["plaza civica", "plaza"],
       "customLatLng": null,
       "spaces": []
+    },
+    {
+      "id": "itd-domo-norte",
+      "code": "DOMO",
+      "name": "Domo Deportivo y Cultural (Unidad Norte)",
+      "category": "Deporte y Cultura",
+      "description": "Domo central en Unidad Norte, entre Eléctrica/Electrónica (EE) y Educación a Distancia (UTD).",
+      "matchKeywords": ["domo", "domo norte"],
+      "customLatLng": null,
+      "spaces": []
+    },
+    {
+      "id": "itd-edificio-e",
+      "code": "E",
+      "name": "Edificio E (Unidad Sur)",
+      "category": "Académico",
+      "description": "Edificio E ubicado junto al Estadio y al norte de las aulas O en Unidad Sur.",
+      "matchKeywords": ["edificio e", "modulo e"],
+      "customLatLng": null,
+      "spaces": []
     }
   ]
 }
